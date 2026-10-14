@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Distill",
+  "productName": "SubLens",
   "version": "0.0.1",
-  "identifier": "com.distill.desktop",
+  "identifier": "com.agions.sublens.desktop",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",
@@ -13,11 +13,11 @@
     "withGlobalTauri": false,
     "windows": [
       {
-        "title": "Distill — 专业视频字幕提炼工具",
+        "title": "SubLens — 专业视频字幕提炼工具",
         "width": 1400,
         "height": 900,
-        "minWidth": 1200,
-        "minHeight": 700,
+        "minWidth": 760,
+        "minHeight": 600,
         "center": true,
         "resizable": true,
         "fullscreen": false,
@@ -47,8 +47,8 @@
     ],
     "resources": [],
     "category": "Utility",
-    "shortDescription": "Distill - 视频字幕蒸馏提炼工具",
-    "longDescription": "Distill 是一款专业的视频硬字幕提取与蒸馏工具。支持基于本地 OCR 与云端视觉大模型双模式，通过区域框选高效提取硬编码字幕并导出为 SRT、VTT 等多种格式。",
+    "shortDescription": "SubLens - 视频字幕蒸馏提炼工具",
+    "longDescription": "SubLens 是一款专业的视频硬字幕提取与蒸馏工具。支持基于本地 OCR 与云端视觉大模型双模式，通过区域框选高效提取硬编码字幕并导出为 SRT、VTT 等多种格式。",
     "windows": {
       "certificateThumbprint": null,
       "digestAlgorithm": "sha256",
@@ -68,19 +68,14 @@
     }
   },
   "plugins": {
-    "shell": {
-      "open": true
-    },
     "asset-protocol": {
       "enable": true,
-      "scope": [
-        "**"
-      ]
+      "scope": []
     },
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDlGRjI4RkRFODNDOEYzRDMtYjFmOGFkNjE1ZmNkNDEyZA==",
       "endpoints": [
-        "https://github.com/Agions/Distill/releases/latest/download/latest.json"
+        "https://github.com/Agions/SubLens/releases/latest/download/latest.json"
       ]
     }
   }

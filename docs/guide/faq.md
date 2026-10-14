@@ -1,6 +1,6 @@
 # 常见问题
 
-本文档收集了 Distill 使用中的常见问题和解决方案。
+本文档收集了 SubLens 使用中的常见问题和解决方案。
 
 ---
 
@@ -48,11 +48,11 @@ rustc --version   # >= 1.82
 
 ### Q: API Key 存储安全吗？
 
-**A:** 非常安全。API Key 通过 AES/Base64 本地加密保存在用户的 LocalStorage 中，且仅在调用云端 OCR 模式识别视频帧时通过 HTTPS 发送，不经过第三方中间服务器。随时可在设置中点击“抹除所有密钥”一键彻底清除。
+**A:** 当前版本会将 API Key 可逆混淆后保存在本机 LocalStorage 中，主要用于避免直接明文展示，并不等同于系统密钥链或安全加密。云端 OCR 识别时，密钥和视频帧会发送给你配置的 API 服务商；请确认服务商隐私政策，不要在共享设备保存长期密钥，并可随时在设置中清除本地凭据。
 
 ---
 
 ## 获取帮助
 
-- [GitHub Issues](https://github.com/Agions/Distill/issues)
-- [GitHub Discussions](https://github.com/Agions/Distill/discussions)
+- [GitHub Issues](https://github.com/Agions/SubLens/issues)
+- [GitHub Discussions](https://github.com/Agions/SubLens/discussions)

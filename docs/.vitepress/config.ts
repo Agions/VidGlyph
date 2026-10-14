@@ -1,16 +1,17 @@
 import { defineConfig } from 'vitepress'
 
 export default defineConfig({
-  title: 'Distill',
+  title: 'SubLens',
   description: '专业视频硬字幕提取与蒸馏工具 — 从视频画面中蒸馏提炼字幕文本',
   lang: 'zh-CN',
-  base: process.env.GITHUB_ACTIONS ? '/Distill/' : '/',
+  base: process.env.GITHUB_ACTIONS ? '/SubLens/' : '/',
   cleanUrls: true,
 
   themeConfig: {
     nav: [
       { text: '指南', link: '/guide/getting-started' },
       { text: '架构', link: '/architecture' },
+      { text: '改造计划', link: '/refactor-plan' },
       { text: '开发者', link: '/developer-guide' },
       { text: 'API', link: '/api/pipeline' },
       { text: '更新日志', link: '/changelog' },
@@ -46,6 +47,7 @@ export default defineConfig({
       '/': [
         { text: '指南', link: '/guide/getting-started' },
         { text: '架构', link: '/architecture' },
+        { text: '改造计划', link: '/refactor-plan' },
         { text: '开发者', link: '/developer-guide' },
         { text: 'API', link: '/api/pipeline' },
         { text: '更新日志', link: '/changelog' },
@@ -53,7 +55,7 @@ export default defineConfig({
     },
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/Agions/Distill' },
+      { icon: 'github', link: 'https://github.com/Agions/SubLens' },
     ],
 
     footer: {
@@ -62,7 +64,7 @@ export default defineConfig({
     },
 
     editLink: {
-      pattern: 'https://github.com/Agions/Distill/edit/main/docs/:path',
+      pattern: 'https://github.com/Agions/SubLens/edit/main/docs/:path',
       text: 'Edit this page on GitHub',
     },
   },

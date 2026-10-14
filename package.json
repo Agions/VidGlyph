@@ -1,21 +1,42 @@
 {
-  "name": "distill",
+  "name": "sublens",
   "version": "0.0.1",
-  "description": "Distill - 专业硬编码字幕提取工具，从视频画面中蒸馏提炼字幕文本。基于 Tauri + Vue 3 + TypeScript 构建。",
+  "description": "SubLens - 专业硬编码字幕提取工具，从视频画面中蒸馏提炼字幕文本。基于 Tauri + Vue 3 + TypeScript 构建。",
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:tauri": "tauri dev",
     "build": "vite build",
+    "build:tauri": "tauri build",
     "preview": "vite preview",
     "tauri": "tauri",
     "type-check": "vue-tsc --noEmit",
     "lint": "eslint src --ext .vue,.ts,.tsx",
     "lint:fix": "eslint src --ext .vue,.ts,.tsx --fix",
+    "format:rust": "cd src-tauri && cargo fmt",
+    "lint:rust": "cd src-tauri && cargo fmt --check && cargo clippy --all-targets -- -D warnings",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:rust": "cd src-tauri && cargo test",
+    "check": "pnpm type-check && pnpm lint && pnpm test",
+    "check:all": "pnpm check && pnpm lint:rust && pnpm test:rust",
+    "audit:reachability": "node scripts/reachability-audit.mjs",
     "docs:build": "vitepress build docs",
     "coverage": "vitest run --coverage",
-    "depcheck": "depcheck --ignores \"@tauri-apps/plugin-dialog,@tauri-apps/plugin-shell,@tauri-apps/plugin-updater\""
+    "depcheck": "depcheck"
+  },
+  "depcheck": {
+    "ignores": [
+      "@vitest/coverage-v8",
+      "@tauri-apps/plugin-dialog",
+      "@tauri-apps/plugin-updater"
+    ],
+    "ignoreMatches": [
+      "@tauri-apps/*",
+      "vitepress",
+      "depcheck"
+    ]
   },
   "keywords": [
     "video",
@@ -39,15 +60,14 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Agions/Distill"
+    "url": "https://github.com/Agions/SubLens"
   },
   "bugs": {
-    "url": "https://github.com/Agions/Distill/issues"
+    "url": "https://github.com/Agions/SubLens/issues"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",
     "@tauri-apps/plugin-dialog": "^2.6.0",
-    "@tauri-apps/plugin-shell": "^2.0.0",
     "@tauri-apps/plugin-updater": "^2.0.0",
     "pinia": "^2.1.0",
     "tesseract.js": "^5.0.0",

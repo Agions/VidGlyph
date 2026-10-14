@@ -1,19 +1,19 @@
 # 使用流程
 
-Distill 采用「导入 → 选区 → 识别 → 导出」的四步极简工作流，极大地降低用户操作门槛。
+SubLens 采用「导入 → 选区 → 识别 → 导出」的四步极简工作流，极大地降低用户操作门槛。
 
 ---
 
 ## 🖼️ 应用运行界面截图
 
 ### 1. 主工作台界面
-![Distill 主工作台界面](/screenshots/app-studio-ui.jpg)
+![SubLens 主工作台界面](/screenshots/app-studio-ui.jpg)
 
 ### 2. 8 点手柄选区与硬字幕抽取
-![Distill 8点手柄框选选区](/screenshots/roi-selection.png)
+![SubLens 8点手柄框选选区](/screenshots/roi-selection.png)
 
 ### 3. 全局配置与凭据管理
-![Distill 设置与密钥管理](/screenshots/settings-modal.jpg)
+![SubLens 设置与密钥管理](/screenshots/settings-modal.jpg)
 
 ---
 

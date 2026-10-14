@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Default permissions for Distill desktop app",
+  "description": "Default permissions for SubLens desktop app",
   "windows": [
     "main"
   ],
@@ -10,7 +10,6 @@
     "dialog:default",
     "dialog:allow-open",
     "dialog:allow-save",
-    "shell:allow-open",
     "updater:default",
     "updater:allow-check",
     "updater:allow-download-and-install"

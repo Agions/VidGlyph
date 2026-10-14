@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main]
 
+# 同一分支的旧流水线在推新提交后自动取消，避免排队浪费
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -38,14 +43,25 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
 
-      - name: Type check
-        run: pnpm exec vue-tsc --noEmit
+      # 统一的本地/CI 质量门禁入口：type-check → lint → test
+      - name: Quality gate
+        run: pnpm check
 
-      - name: Lint
-        run: pnpm lint
+      - name: Coverage report
+        run: pnpm test:coverage
 
-      - name: Test
-        run: pnpm test
+      - name: Dependency audit
+        run: pnpm depcheck
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-lcov
+          path: coverage/lcov.info
+          if-no-files-found: warn
+
+      - name: Build docs
+        run: pnpm docs:build
 
   # ── Tauri build (parallel with quality + rust-test, no blocking dependency) ───
   build:
@@ -131,4 +147,15 @@ jobs:
       - name: Run unit tests
         run: |
           cd src-tauri
-          cargo test --lib --bins
+          cargo test
+
+      # 格式化与静态检查：与本地 `pnpm lint:rust` 等价
+      - name: Check formatting
+        run: |
+          cd src-tauri
+          cargo fmt --check
+
+      - name: Run Clippy
+        run: |
+          cd src-tauri
+          cargo clippy --all-targets -- -D warnings

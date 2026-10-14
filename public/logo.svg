@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Distill Logo">
-  <title>Distill</title>
-  <desc>Distill - 专业视频硬字幕提取与蒸馏工具 Logo</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="SubLens Logo">
+  <title>SubLens</title>
+  <desc>SubLens - 专业视频硬字幕提取与蒸馏工具 Logo</desc>
 
   <defs>
     <!-- 暗黑 Slate 主渐变 -->
@@ -34,7 +34,7 @@
   <!-- 高光边框 -->
   <rect x="8" y="8" width="496" height="496" rx="120" fill="none" stroke="url(#emeraldGradient)" stroke-width="3" opacity="0.3"/>
 
-  <!-- 主蒸馏标志 (Distillation Flask & Subtitle Frame Focus) -->
+  <!-- 主蒸馏标志 (Subtitle Lens & Frame Focus) -->
   <g transform="translate(256, 200)" filter="url(#emeraldGlow)">
     <!-- 外层 8 点 ROI 框选句柄框 -->
     <rect x="-110" y="-90" width="220" height="150" rx="16" fill="none" stroke="url(#emeraldGradient)" stroke-width="6" stroke-dasharray="8 4"/>
@@ -53,13 +53,13 @@
     <rect x="-32" y="0" width="32" height="6" rx="3" fill="#ffffff" opacity="0.8"/>
   </g>
 
-  <!-- 底部 Distill 品牌标志 -->
+  <!-- 底部 SubLens 品牌标志 -->
   <g transform="translate(256, 400)">
     <text x="0" y="0" text-anchor="middle"
           font-family="system-ui, -apple-system, 'Inter', sans-serif"
           font-size="52" font-weight="800" letter-spacing="-1.5"
           fill="#ffffff">
-      Distill
+      SubLens
     </text>
     <text x="0" y="32" text-anchor="middle"
           font-family="system-ui, -apple-system, 'Inter', sans-serif"

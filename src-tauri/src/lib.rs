@@ -1,8 +1,8 @@
-//! Distill - Rust Tauri Application Library
+//! SubLens - Rust Tauri Application Library
 //!
 //! # Overview
 //!
-//! Distill is a desktop application for extracting hardcoded subtitles from videos using OCR and Vision AI.
+//! SubLens is a desktop application for extracting hardcoded subtitles from videos using OCR and Vision AI.
 
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -24,7 +24,7 @@ pub fn run() {
         .with(tracing_subscriber::EnvFilter::from_default_env())
         .init();
 
-    info!("Starting Distill v{}", env!("CARGO_PKG_VERSION"));
+    info!("Starting SubLens v{}", env!("CARGO_PKG_VERSION"));
 
     // Warm up the ONNX OCR engine on startup (non-blocking background task)
     info!("Warming up OCR engine...");
@@ -36,7 +36,6 @@ pub fn run() {
     });
 
     tauri::Builder::default()
-        .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
@@ -59,7 +58,7 @@ pub fn run() {
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| {
             tracing::error!("Failed to run Tauri application: {}", e);
-            eprintln!("ERROR: Failed to start Distill application: {}", e);
+            eprintln!("ERROR: Failed to start SubLens application: {}", e);
             std::process::exit(1);
         });
 }

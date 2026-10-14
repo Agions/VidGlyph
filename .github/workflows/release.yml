@@ -118,9 +118,9 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: ${{ github.event.inputs.tag || github.ref_name }}
-          releaseName: 'Distill ${{ github.event.inputs.tag || github.ref_name }}'
+          releaseName: 'SubLens ${{ github.event.inputs.tag || github.ref_name }}'
           releaseBody: |
-            ## Distill ${{ github.event.inputs.tag || github.ref_name }}
+            ## SubLens ${{ github.event.inputs.tag || github.ref_name }}
 
             专业视频硬字幕提取与蒸馏工具，支持离线与云端双模式字幕提取。基于 Tauri 2.x + Vue 3 + Rust 构建。
 
@@ -128,9 +128,9 @@ jobs:
 
             | Platform | Architecture | File |
             |---------|-------------|------|
-            | macOS | Apple Silicon (M1/M2/M3) | `Distill_macos-apple-silicon.tar.gz` |
-            | Linux | x86_64 | `Distill_ubuntu-x64.tar.gz` |
-            | Windows | x64 | `Distill_windows-x64.zip` |
+            | macOS | Apple Silicon (M1/M2/M3) | `SubLens_macos-apple-silicon.tar.gz` |
+            | Linux | x86_64 | `SubLens_ubuntu-x64.tar.gz` |
+            | Windows | x64 | `SubLens_windows-x64.zip` |
 
             ### Features
             - ⚡ 双模式 OCR 引擎：支持本地离线（Tesseract / Native ONNX）与云端 API（Gemini / Vision）
@@ -142,6 +142,6 @@ jobs:
 
             ### Installation
             1. Download the archive for your platform
-            2. Extract and run `Distill` (Linux/macOS) or `Distill.exe` (Windows)
-            3. **macOS**: run `xattr -cr ./Distill` if blocked by Gatekeeper
+            2. Extract and run `SubLens` (Linux/macOS) or `SubLens.exe` (Windows)
+            3. **macOS**: run `xattr -cr ./SubLens` if blocked by Gatekeeper
           args: ${{ matrix.args }}

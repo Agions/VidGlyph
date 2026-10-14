@@ -2,12 +2,12 @@
 layout: home
 
 hero:
-  name: Distill
+  name: SubLens
   text: 专业视频硬字幕提取与蒸馏工具
   tagline: 从视频画面中蒸馏提炼字幕文本，支持离线与云端双模式。基于 Tauri + Vue 3 + TypeScript 构建。
   image:
     src: /logo.svg
-    alt: Distill
+    alt: SubLens
   actions:
     - theme: brand
       text: 快速开始
@@ -17,7 +17,7 @@ hero:
       link: /architecture
     - theme: alt
       text: GitHub
-      link: https://github.com/Agions/Distill
+      link: https://github.com/Agions/SubLens
 
 features:
   - icon: ⚡
@@ -27,8 +27,8 @@ features:
     title: 8 点手柄区域框选
     details: 视频预览图层上交互式拖拽、缩放框选硬字幕 ROI 选区，坐标归一化 (0~1)
   - icon: 🔒
-    title: 安全加密凭据管理
-    details: API Key 使用 AES/Base64 本地加密保存，支持随时一键抹除凭据
+    title: 本地凭据管理
+    details: API Key 仅做本地可逆混淆并支持一键清除；共享设备请勿保存长期密钥
   - icon: 🎬
     title: 暗黑 Studio UI
     details: 沉浸式影视后期风格双栏界面，左侧视频框选预览 + 右侧时间轴字幕卡片列表
@@ -44,7 +44,7 @@ features:
 
 | 指标 | 数据 |
 |:-----|:-----|
-| 测试数量 | 404 个 Vitest 单元测试全通过 |
+| 质量基线 | TypeScript、ESLint、Vitest 与 Rust 测试全通过 |
 | 导出格式 | SRT / VTT / TXT / JSON |
 | 架构设计 | 5 层解耦抽象与依赖倒置 |
 | 技术栈 | Tauri 2.x + Vue 3.5 + TypeScript 5.x |
