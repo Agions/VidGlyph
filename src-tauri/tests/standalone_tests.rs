@@ -1,4 +1,4 @@
-//! Standalone tests for CaptionFab's new Rust-native modules.
+//! Standalone tests for SubLens's new Rust-native modules.
 //!
 //! Compile and run: `rustc tests/standalone_tests.rs -o /tmp/test_bin && /tmp/test_bin`
 //!
@@ -8,8 +8,6 @@
 mod shared_core {
     include!("../src/commands/utils/shared_core.rs");
 }
-
-use shared_core::{horizontal_projection, parse_pts_times, sobel_edges_raw};
 
 // ─── Scene detection utilities (extracted from scene.rs) ─────────────
 

@@ -1,4 +1,4 @@
-//! Shared utilities for the CaptionFab commands layer.
+//! Shared utilities for the SubLens commands layer.
 //!
 //! ## Contents
 //!

@@ -8,10 +8,11 @@ export const MIME_IMAGE_PNG = 'image/png'
 
 // ─── Storage ──────────────────────────────────────────────────────────
 export const LOCALSTORAGE_SIZE_LIMIT = 5 * 1024 * 1024
-export const LOCALSTORAGE_KEY_SETTINGS = 'distill-settings'
-export const LOCALSTORAGE_KEY_THUMBNAILS = 'distill-thumbnails'
-export const LOCALSTORAGE_KEY_CACHE = 'distill-cache'
-export const LOCALSTORAGE_KEY_TEMP = 'distill-temp'
+export const LOCALSTORAGE_KEY_SETTINGS = 'sublens-settings'
+export const LOCALSTORAGE_KEY_EXTRACTION_CONFIG = 'sublens-extraction-config'
+export const LOCALSTORAGE_KEY_THUMBNAILS = 'sublens-thumbnails'
+export const LOCALSTORAGE_KEY_CACHE = 'sublens-cache'
+export const LOCALSTORAGE_KEY_TEMP = 'sublens-temp'
 
 // ─── Default extract options ──────────────────────────────────────────
 export const DEFAULT_OCR_ENGINE = 'paddle' as const

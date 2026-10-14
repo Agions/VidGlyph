@@ -40,3 +40,54 @@ export function findSubtitleAtTime(
 
   return result
 }
+
+/** 低置信度阈值（0~100），与导出校验保持一致 */
+export const LOW_CONFIDENCE_LIMIT = 60
+
+export type ConfidenceFilter = 'all' | 'low' | 'high'
+
+export interface SubtitleFilterRequest {
+  /** 关键词（大小写不敏感，支持空白分隔的多关键词 AND 匹配） */
+  keyword?: string
+  /** 置信度筛选档位 */
+  confidence?: ConfidenceFilter
+  /** 是否只保留被人工编辑过的条目（无该字段时忽略） */
+  onlyEdited?: boolean
+}
+
+/**
+ * 按关键词与置信度筛选字幕条目（纯函数，泛型以兼容 OCRItem / SubtitleItem）。
+ */
+export function filterSubtitleItems<T extends { text: string; confidence: number; edited?: boolean }>(
+  items: readonly T[],
+  request: SubtitleFilterRequest = {},
+): T[] {
+  const keywords = (request.keyword ?? '')
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((token) => token.length > 0)
+
+  const confidence = request.confidence ?? 'all'
+
+  return items.filter((item) => {
+    if (keywords.length > 0) {
+      const haystack = item.text.toLowerCase()
+      if (!keywords.every((token) => haystack.includes(token))) return false
+    }
+
+    const score = normalizeConfidence(item.confidence)
+    if (confidence === 'low' && score >= LOW_CONFIDENCE_LIMIT) return false
+    if (confidence === 'high' && score < 90) return false
+
+    if (request.onlyEdited && item.edited !== true) return false
+
+    return true
+  })
+}
+
+/** 兼容 0~1 与 0~100 两种置信度量纲 */
+export function normalizeConfidence(confidence: number): number {
+  if (!Number.isFinite(confidence)) return 0
+  return confidence <= 1 ? confidence * 100 : confidence
+}

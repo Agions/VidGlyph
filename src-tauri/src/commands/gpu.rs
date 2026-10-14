@@ -1,4 +1,4 @@
-//! GPU capability detection for CaptionFab.
+//! GPU capability detection for SubLens.
 //!
 //! Uses ONNX Runtime's provider enumeration to detect CUDA/TensorRT
 //! availability — no Python dependency needed.

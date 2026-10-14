@@ -96,7 +96,7 @@ fn export_ass_family(
 
 pub fn export_as_ass(subtitles: &[SubtitleItem]) -> String {
     let header = r#"[Script Info]
-Title: Distill Export
+Title: SubLens Export
 ScriptType: v4.00+
 Collisions: Normal
 PlayDepth: 0
@@ -113,7 +113,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
 pub fn export_as_ssa(subtitles: &[SubtitleItem]) -> String {
     let header = r#"[Script Info]
-Title: Distill Export
+Title: SubLens Export
 ScriptType:v4.00
 Collisions:Normal
 PlayDepth:0
@@ -140,12 +140,12 @@ pub fn export_as_txt(subtitles: &[SubtitleItem]) -> String {
 
 pub fn export_as_lrc(subtitles: &[SubtitleItem]) -> String {
     let mut output = String::from(
-        "[ti:Distill Export]\n\
-         [ar:Distill]\n\
+        "[ti:SubLens Export]\n\
+         [ar:SubLens]\n\
          [al:Subtitle Export]\n\
-         [by:Distill v4.0]\n\
+         [by:SubLens v4.0]\n\
          [offset:0]\n\
-         [re:Distill]\n\n",
+         [re:SubLens]\n\n",
     );
     for sub in subtitles {
         let mins = (sub.start_time / 60.0).floor() as u32;
@@ -165,7 +165,7 @@ pub fn export_as_json(subtitles: &[SubtitleItem]) -> Result<String, String> {
     let output = serde_json::json!({
         "version": "4.0",
         "generatedAt": chrono::Local::now().to_rfc3339(),
-        "tool": "Distill",
+        "tool": "SubLens",
         "subtitleCount": subtitles.len(),
         "subtitles": subtitles.iter().map(|sub| {
             serde_json::json!({

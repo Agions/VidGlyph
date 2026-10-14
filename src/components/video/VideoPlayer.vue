@@ -102,13 +102,15 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useSubtitleStore } from '../../stores/subtitleStore';
+import { useSubtitleStore } from '../../stores';
 import VideoCanvasOverlay from './VideoCanvasOverlay.vue';
 import { TimecodeConverter } from '../../utils/TimecodeConverter';
+import { useWorkspaceVideoImport } from '../../composables/useWorkspaceVideoImport';
 
 const subtitleStore = useSubtitleStore();
 const videoRef = ref<HTMLVideoElement | null>(null);
 const isPlaying = ref(false);
+const { importVideoFile } = useWorkspaceVideoImport();
 
 const formattedCurrentTime = computed(() =>
   TimecodeConverter.msToSRT(subtitleStore.currentTime * 1000).split(',')[0]
@@ -121,6 +123,8 @@ const formattedDuration = computed(() =>
 function onVideoLoaded() {
   if (videoRef.value) {
     subtitleStore.videoDuration = videoRef.value.duration || 0;
+    subtitleStore.videoWidth = videoRef.value.videoWidth || 0;
+    subtitleStore.videoHeight = videoRef.value.videoHeight || 0;
   }
 }
 
@@ -135,19 +139,8 @@ function onVideoError(e: Event) {
 }
 
 function onDropVideo(e: DragEvent) {
-  const files = e.dataTransfer?.files;
-  if (files && files.length > 0) {
-    const file = files[0];
-    if (file.type.startsWith('video/') || /\.(mp4|mkv|avi|mov|webm|flv|wmv)$/i.test(file.name)) {
-      if (subtitleStore.videoUrl) {
-        URL.revokeObjectURL(subtitleStore.videoUrl);
-      }
-      subtitleStore.videoUrl = URL.createObjectURL(file);
-      subtitleStore.videoFileName = file.name;
-      subtitleStore.clearSubtitles();
-      subtitleStore.isRoiActive = true;
-    }
-  }
+  const file = e.dataTransfer?.files[0];
+  if (file) importVideoFile(file);
 }
 
 function togglePlay() {

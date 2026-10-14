@@ -1,5 +1,5 @@
 /**
- * Video and OCR Types for CaptionFab
+ * Video and OCR Types for SubLens
  *
  * ## Key Types
  *

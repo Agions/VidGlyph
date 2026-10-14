@@ -8,8 +8,6 @@ pub use crate::commands::utils::shared_core::{
 };
 
 /// Fill normalised pixel values for all channels of a single pixel position.
-
-/// Fill normalised pixel values for all channels of a single pixel position.
 ///
 /// This eliminates the duplicated normalisation loop in
 /// `ocr_engine/preprocess.rs` (detection + recognition paths).

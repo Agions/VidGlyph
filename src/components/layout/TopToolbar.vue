@@ -9,7 +9,7 @@
       </div>
       <div>
         <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
-          Distill
+          SubLens
           <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800/80">v0.0.1</span>
           <span v-if="isTauri" class="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded bg-blue-950 text-blue-400 border border-blue-800/80">Tauri Native</span>
         </h1>
@@ -42,6 +42,7 @@
       <!-- 自动定位选区按键 -->
       <button
         v-if="subtitleStore.videoUrl"
+        :disabled="isDetectingROI"
         class="flex items-center gap-2 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-teal-300 text-xs font-semibold rounded-lg border border-slate-700 shadow transition cursor-pointer"
         title="智能分析视频硬字幕轮廓并自动推荐 ROI 选区"
         @click="onAutoDetectROI"
@@ -49,7 +50,7 @@
         <svg class="w-4 h-4 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L5.6 15.12a2 2 0 00-1.023.547l-1.06 1.06a2 2 0 000 2.828l1.06 1.06a2 2 0 002.828 0l1.06-1.06a2 2 0 011.414-.586l.318-.016a6 6 0 013.86-.517l2.387.477a2 2 0 001.022.547l1.06-1.06a2 2 0 000-2.828l-1.06-1.06z"/>
         </svg>
-        <span>自动定位选区</span>
+        <span>{{ isDetectingROI ? '正在分析...' : '自动定位选区' }}</span>
       </button>
 
       <!-- 选择区域 (ROI 显隐开关联动) -->
@@ -68,9 +69,9 @@
 
       <!-- 开始提取字幕 -->
       <button
-        :disabled="!subtitleStore.videoUrl || subtitleStore.isExtracting"
+        :disabled="!subtitleStore.videoUrl"
         class="flex items-center gap-2 px-5 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white text-xs font-bold rounded-lg shadow-lg shadow-emerald-950 transition cursor-pointer"
-        @click="$emit('startExtraction')"
+        @click="onExtractionClick"
       >
         <svg v-if="!subtitleStore.isExtracting" class="w-4 h-4 fill-current" viewBox="0 0 24 24">
           <path d="M8 5v14l11-7z"/>
@@ -79,12 +80,64 @@
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
         </svg>
-        {{ subtitleStore.isExtracting ? `提取中 [${subtitleStore.progressPercent}%]...` : '开始提取字幕' }}
+        {{ subtitleStore.isExtracting ? `停止提取 [${subtitleStore.progressPercent}%]` : '开始提取字幕' }}
       </button>
     </div>
 
     <!-- Right Mode Switcher & Settings -->
     <div class="flex items-center gap-3">
+      <!-- 提取配置快捷控件（语言、采样间隔、时间范围指示） -->
+      <div class="flex items-center gap-2 bg-slate-900/90 border border-slate-800 rounded-lg px-2 py-1 text-xs">
+        <!-- 识别语言快捷选择 -->
+        <label class="flex items-center gap-1.5 cursor-pointer" title="OCR 识别语言">
+          <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+          </svg>
+          <select
+            :value="extractionSettings.options.language"
+            class="bg-transparent text-slate-200 text-xs focus:outline-none cursor-pointer hover:text-white"
+            @change="onLanguageChange"
+          >
+            <option
+              v-for="lang in supportedLanguages"
+              :key="lang.value"
+              :value="lang.value"
+              class="bg-slate-900 text-slate-200"
+            >
+              {{ lang.label }}
+            </option>
+          </select>
+        </label>
+
+        <span class="text-slate-700">|</span>
+
+        <!-- 采样间隔快捷选择 -->
+        <label class="flex items-center gap-1 cursor-pointer" title="抽帧采样间隔">
+          <span class="text-[11px] text-slate-400">间隔:</span>
+          <select
+            :value="extractionSettings.options.sampleInterval"
+            class="bg-transparent text-slate-200 text-xs focus:outline-none cursor-pointer hover:text-white font-mono"
+            @change="onSampleIntervalChange"
+          >
+            <option :value="0.5" class="bg-slate-900 text-slate-200">0.5s</option>
+            <option :value="1.0" class="bg-slate-900 text-slate-200">1.0s</option>
+            <option :value="2.0" class="bg-slate-900 text-slate-200">2.0s</option>
+            <option :value="3.0" class="bg-slate-900 text-slate-200">3.0s</option>
+          </select>
+        </label>
+
+        <!-- 自定义时间范围提示徽章（如仅截取局部片段时间） -->
+        <button
+          v-if="hasTimeSpanConstraint"
+          class="flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-950/70 border border-emerald-800/60 text-emerald-400 font-mono text-[10px] cursor-pointer hover:bg-emerald-900 transition"
+          title="已设置局部时间范围，点击可前往设置页修改"
+          @click="$emit('openSettings')"
+        >
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          <span>{{ timeSpanLabel }}</span>
+        </button>
+      </div>
+
       <!-- 离线/云端 模式 Toggle -->
       <div class="flex items-center p-1 bg-slate-900 border border-slate-800 rounded-lg text-xs">
         <button
@@ -124,42 +177,75 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useSubtitleStore } from '../../stores/subtitleStore';
-import { TauriBridge } from '../../services/tauriBridge';
+import { useExtractionSettingsStore, useSubtitleStore } from '../../stores';
+import { TauriBridge } from '../../services';
+import { useWorkspaceVideoImport } from '../../composables/useWorkspaceVideoImport';
+import { SUPPORTED_LANGUAGES } from '../../core';
+
+const props = defineProps<{ isDetectingRoi?: boolean }>();
 
 const subtitleStore = useSubtitleStore();
+const extractionSettings = useExtractionSettingsStore();
+const supportedLanguages = SUPPORTED_LANGUAGES;
+
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const isTauri = computed(() => TauriBridge.isTauriEnv());
+const { importVideoFile, importVideoPath } = useWorkspaceVideoImport();
+const isDetectingROI = computed(() => props.isDetectingRoi === true);
 
-defineEmits(['startExtraction', 'openSettings']);
+const hasTimeSpanConstraint = computed(() => {
+  const { startTime, endTime } = extractionSettings.options;
+  return startTime > 0 || (endTime !== null && endTime > 0);
+});
 
-function onImportClick() {
+const timeSpanLabel = computed(() => {
+  const { startTime, endTime } = extractionSettings.options;
+  const startStr = `${startTime}s`;
+  const endStr = endTime !== null ? `${endTime}s` : '片尾';
+  return `${startStr} ~ ${endStr}`;
+});
+
+function onLanguageChange(event: Event) {
+  const select = event.target as HTMLSelectElement;
+  extractionSettings.update({ language: select.value });
+}
+
+function onSampleIntervalChange(event: Event) {
+  const select = event.target as HTMLSelectElement;
+  extractionSettings.update({ sampleInterval: Number(select.value) });
+}
+
+const emit = defineEmits<{
+  (event: 'startExtraction'): void
+  (event: 'cancelExtraction'): void
+  (event: 'openSettings'): void
+  (event: 'autoRoi'): void
+}>();
+
+function onExtractionClick() {
+  if (subtitleStore.isExtracting) emit('cancelExtraction')
+  else emit('startExtraction')
+}
+
+async function onImportClick() {
+  if (isTauri.value) {
+    const path = await TauriBridge.openVideoFileDialog();
+    if (path) importVideoPath(path);
+    return;
+  }
   fileInputRef.value?.click();
 }
 
-async function onAutoDetectROI() {
+function onAutoDetectROI() {
   if (!subtitleStore.videoUrl) return;
-  // 自动为当前视频智能对齐底部字幕推荐选区
-  subtitleStore.setROI({
-    x: 0.12,
-    y: 0.72,
-    width: 0.76,
-    height: 0.18,
-  });
-  subtitleStore.isRoiActive = true;
+  // 具体检测与结果写回由组合根（app.vue）协调，这里只负责派发意图
+  emit('autoRoi');
 }
 
 function onFileSelected(e: Event) {
   const target = e.target as HTMLInputElement;
   const file = target.files?.[0];
-  if (file) {
-    if (subtitleStore.videoUrl) {
-      URL.revokeObjectURL(subtitleStore.videoUrl);
-    }
-    subtitleStore.videoUrl = URL.createObjectURL(file);
-    subtitleStore.videoFileName = file.name;
-    subtitleStore.clearSubtitles();
-    subtitleStore.isRoiActive = true; // 导入新视频时自动显示 ROI 选择框
-  }
+  if (file) importVideoFile(file);
+  target.value = '';
 }
 </script>

@@ -6,6 +6,10 @@
 
 import type { IOCREngineProvider, OCRConfig, OCRItem, NormalizedROI } from './IOCREngine';
 
+interface GeminiResponse {
+  candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+}
+
 export class CloudOCREngine implements IOCREngineProvider {
   readonly engineName = 'Cloud Vision API Engine';
   readonly mode = 'cloud' as const;
@@ -65,7 +69,7 @@ export class CloudOCREngine implements IOCREngineProvider {
         throw new Error(`云端 OCR 请求失败: HTTP ${response.status}`);
       }
 
-      const resData = await response.json();
+      const resData = await response.json() as GeminiResponse;
       const rawText = resData.candidates?.[0]?.content?.parts?.[0]?.text || '';
       const cleanText = rawText.trim().replace(/\n+/g, ' ');
 
@@ -83,7 +87,7 @@ export class CloudOCREngine implements IOCREngineProvider {
           roi,
         },
       ];
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Cloud OCR Engine 识别异常:', err);
       throw err;
     }
@@ -97,14 +101,19 @@ export class CloudOCREngine implements IOCREngineProvider {
 
     if (frameData instanceof HTMLCanvasElement) {
       canvas = frameData;
-    } else {
+    } else if (frameData instanceof ImageData) {
       canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      if (frameData instanceof ImageData) {
-        canvas.width = frameData.width;
-        canvas.height = frameData.height;
-        ctx?.putImageData(frameData, 0, 0);
-      }
+      canvas.width = frameData.width;
+      canvas.height = frameData.height;
+      ctx?.putImageData(frameData, 0, 0);
+    } else {
+      const bitmap = await createImageBitmap(frameData);
+      canvas = document.createElement('canvas');
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      canvas.getContext('2d')?.drawImage(bitmap, 0, 0);
+      bitmap.close();
     }
 
     // 如果指定了 ROI 选区，则进行裁剪

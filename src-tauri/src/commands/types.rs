@@ -1,4 +1,4 @@
-//! Shared types for the CaptionFab commands layer.
+//! Shared types for the SubLens commands layer.
 //!
 //! All cross-cutting data structures live here to avoid duplication.
 

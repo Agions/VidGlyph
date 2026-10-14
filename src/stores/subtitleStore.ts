@@ -5,7 +5,7 @@
 
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { OCRItem, NormalizedROI } from '../services/ocr/IOCREngine';
+import type { OCRItem, NormalizedROI } from '../services';
 
 export const useSubtitleStore = defineStore('subtitle', () => {
   // 当前模式: 'local' (离线硬字幕) | 'cloud' (API Key)
@@ -16,9 +16,12 @@ export const useSubtitleStore = defineStore('subtitle', () => {
   
   // 提取视频相关属性
   const videoUrl = ref<string>('');
+  const videoPath = ref<string>('');
   const videoPoster = ref<string>('');
   const videoFileName = ref<string>('');
   const videoDuration = ref<number>(0);
+  const videoWidth = ref<number>(0);
+  const videoHeight = ref<number>(0);
   const currentTime = ref<number>(0);
 
   // 图像选区 ROI (0.0 ~ 1.0 归一化比例)
@@ -85,9 +88,12 @@ export const useSubtitleStore = defineStore('subtitle', () => {
     ocrMode,
     isRoiActive,
     videoUrl,
+    videoPath,
     videoPoster,
     videoFileName,
     videoDuration,
+    videoWidth,
+    videoHeight,
     currentTime,
     roi,
     isExtracting,
@@ -102,8 +108,9 @@ export const useSubtitleStore = defineStore('subtitle', () => {
     setROI,
   };
 
-  if (typeof window !== 'undefined') {
-    (window as any).__subtitleStore = storeObj;
+  // 仅开发环境暴露调试句柄，生产构建不再挂载全局对象
+  if (import.meta.env.DEV && typeof window !== 'undefined') {
+    (window as Window & { __subtitleStore?: typeof storeObj }).__subtitleStore = storeObj;
   }
 
   return storeObj;

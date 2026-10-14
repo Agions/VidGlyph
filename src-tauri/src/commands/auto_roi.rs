@@ -91,7 +91,7 @@ fn detect_roi_from_image(img: &DynamicImage) -> DetectedROI {
     let edges = sobel_edges(&gray);
 
     // Focus on the bottom third of the frame (subtitles are typically there)
-    let bottom_third_start = (height / 3).max(1) as usize;
+    let bottom_third_start = ((height * 2) / 3).max(1) as usize;
     if bottom_third_start >= edges.len() {
         return fallback_roi(width, height);
     }
@@ -142,8 +142,8 @@ fn detect_roi_from_image(img: &DynamicImage) -> DetectedROI {
     let region_bottom = (bottom_third_start + block_bottom + padding_rows).min(height as usize - 1);
 
     // Vertical projection: find left/right bounds of text within the text rows
-    let mut left_col = 0usize;
-    let mut right_col = width as usize;
+    let mut left_col = width as usize;
+    let mut right_col = 0usize;
 
     for y in region_top..=region_bottom {
         for x in 0..width as usize {
@@ -152,6 +152,10 @@ fn detect_roi_from_image(img: &DynamicImage) -> DetectedROI {
                 right_col = right_col.max(x);
             }
         }
+    }
+
+    if left_col > right_col {
+        return fallback_roi(width, height);
     }
 
     let col_padding = 5;
@@ -212,7 +216,7 @@ pub(crate) async fn extract_frame_for_detection(
 
     // Use a UUID-based temp file to avoid race conditions
     let uuid = uuid_v4();
-    let output_path = std::env::temp_dir().join(format!("captionfab_roi_frame_{}.png", uuid));
+    let output_path = std::env::temp_dir().join(format!("sublens_roi_frame_{}.png", uuid));
     let guard = TempFileGuard::new(output_path.clone());
 
     let ts_str = format!("{}", timestamp);
@@ -293,4 +297,39 @@ pub async fn auto_detect_roi(
     );
 
     Ok(roi)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use image::{ImageBuffer, Luma};
+
+    #[test]
+    fn detects_horizontal_bounds_in_bottom_third() {
+        let mut image = ImageBuffer::from_pixel(240, 180, Luma([0u8]));
+        for y in [135u32, 145, 155] {
+            for row in y..(y + 4) {
+                for x in 60..180 {
+                    image.put_pixel(x, row, Luma([255u8]));
+                }
+            }
+        }
+
+        let result = detect_roi_from_image(&DynamicImage::ImageLuma8(image));
+        assert!(
+            result.x > 10.0,
+            "expected cropped left bound, got {}",
+            result.x
+        );
+        assert!(
+            result.width < 80.0,
+            "expected cropped width, got {}",
+            result.width
+        );
+        assert!(
+            result.y >= 65.0,
+            "expected bottom-third ROI, got {}",
+            result.y
+        );
+    }
 }

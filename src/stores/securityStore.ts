@@ -1,15 +1,15 @@
 /**
  * @file securityStore.ts
- * @description 安全凭据管理 Store，用于 AES/Base64 本地加密保存 API Key，支持随时检索、修改与安全抹除。
+ * @description 凭据管理 Store。API Key 仅做本地可逆混淆，不提供系统密钥链级别的安全保护。
  */
 
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 
-const STORAGE_KEY = 'distill_sec_credentials_v1';
-const SECRET_SALT = 'Distill_Salt_2026_Secure';
+const STORAGE_KEY = 'sublens_sec_credentials_v1';
+const SECRET_SALT = 'SubLens_Salt_2026_Secure';
 
-function simpleEncrypt(text: string): string {
+function obfuscate(text: string): string {
   try {
     const combined = `${SECRET_SALT}:${text}`;
     return btoa(unescape(encodeURIComponent(combined)));
@@ -18,7 +18,7 @@ function simpleEncrypt(text: string): string {
   }
 }
 
-function simpleDecrypt(encoded: string): string {
+function deobfuscate(encoded: string): string {
   try {
     const decoded = decodeURIComponent(escape(atob(encoded)));
     if (decoded.startsWith(`${SECRET_SALT}:`)) {
@@ -35,14 +35,14 @@ export const useSecurityStore = defineStore('security', () => {
   const cloudEndpoint = ref<string>('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent');
   const localModelPath = ref<string>('/models/tesseract/');
 
-  /** 从 LocalStorage 加载加密凭据 */
+  /** 从 LocalStorage 加载经过混淆的凭据 */
   function loadCredentials() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
         if (parsed.encApiKey) {
-          apiKey.value = simpleDecrypt(parsed.encApiKey);
+          apiKey.value = deobfuscate(parsed.encApiKey);
         }
         if (parsed.cloudEndpoint) {
           cloudEndpoint.value = parsed.cloudEndpoint;
@@ -56,7 +56,7 @@ export const useSecurityStore = defineStore('security', () => {
     }
   }
 
-  /** 加密并持久化凭据 */
+  /** 混淆并持久化凭据；该机制仅避免明文展示，不构成安全加密。 */
   function saveApiKey(newKey: string, endpoint?: string) {
     apiKey.value = newKey.trim();
     if (endpoint) {
@@ -64,7 +64,7 @@ export const useSecurityStore = defineStore('security', () => {
     }
 
     const payload = {
-      encApiKey: simpleEncrypt(apiKey.value),
+      encApiKey: obfuscate(apiKey.value),
       cloudEndpoint: cloudEndpoint.value,
       localModelPath: localModelPath.value,
       updatedAt: Date.now(),

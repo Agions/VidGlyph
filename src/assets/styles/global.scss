@@ -1,5 +1,5 @@
 // ============================================
-// CaptionFab Design System v2.0 - Global Styles
+// SubLens Design System v2.0 - Global Styles
 // ============================================
 // ============================================
 
@@ -7,11 +7,7 @@
 @import 'variables';
 @import 'mixins';
 @import 'animations';
-
-// ── Google Fonts Import ─────────────────────────────────────
-// DM Sans: distinctive, modern sans-serif
-// JetBrains Mono: for code/mono contexts
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import 'workspace-utilities';
 
 // ── CSS Variables ─────────────────────────────────────────────
 :root {

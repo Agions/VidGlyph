@@ -1,6 +1,7 @@
+use std::path::{Component, Path, PathBuf};
 use tauri::AppHandle;
-use tauri_plugin_dialog::{DialogExt, FileDialogBuilder, FilePath};
 use tauri::Runtime;
+use tauri_plugin_dialog::{DialogExt, FileDialogBuilder, FilePath};
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct FileFilter {
@@ -77,48 +78,60 @@ pub async fn open_file_dialog(
     handle_file_path(file_path)
 }
 
-/// Validate that the path is within allowed directories and is safe.
-/// Prevents path traversal attacks (e.g., ../../../etc/passwd).
-fn validate_path(path: &str) -> Result<(), String> {
-    // Canonicalize the path and verify it's within the app data directory
-    let canonical = std::path::Path::new(path)
-        .canonicalize()
-        .map_err(|e| format!("Invalid path {}: {}", path, e))?;
-
-    // For security, restrict to the app's own data directories only.
-    // Never allow arbitrary user directories like ~/Documents.
-    // If data_local_dir is unavailable, fall back to temp only (never ".")
-    let allowed_dirs = match dirs::data_local_dir() {
-        Some(local) => vec![std::env::temp_dir(), local.join("CaptionFab")],
-        None => vec![std::env::temp_dir()],
-    };
-
-    let is_allowed = allowed_dirs
-        .iter()
-        .any(|allowed| canonical.starts_with(allowed));
-
-    if !is_allowed {
-        return Err(format!(
-            "Path {} is outside allowed directories (path traversal attempt?)",
-            path
-        ));
+/// 校验用户选择的文件路径。
+///
+/// 设计决策：这些路径均来自原生文件对话框，即用户显式授权的位置
+/// （导出字幕到「桌面 / 文档」等目录是产品的主流程），因此不再做目录白名单限制。
+/// 仍然拦截两类真实风险：
+/// 1. 非绝对路径（相对路径语义不确定，易被利用）；
+/// 2. 包含 `..` 上级目录引用（路径遍历）。
+/// 写入时额外要求父目录已存在，避免静默创建非预期目录。
+fn validate_user_path(path: &str, require_existing_parent: bool) -> Result<PathBuf, String> {
+    if path.trim().is_empty() {
+        return Err("文件路径不能为空".to_string());
     }
 
-    Ok(())
+    let candidate = Path::new(path);
+    if !candidate.is_absolute() {
+        return Err(format!("仅支持绝对路径: {}", path));
+    }
+
+    if candidate
+        .components()
+        .any(|component| matches!(component, Component::ParentDir))
+    {
+        return Err(format!("路径中不允许包含上级目录引用: {}", path));
+    }
+
+    match candidate.file_name() {
+        Some(name) if !name.is_empty() => {}
+        _ => return Err(format!("路径缺少文件名: {}", path)),
+    }
+
+    if require_existing_parent {
+        let parent = candidate
+            .parent()
+            .ok_or_else(|| format!("无法解析目标目录: {}", path))?;
+        if !parent.exists() {
+            return Err(format!("目标目录不存在: {}", parent.display()));
+        }
+    }
+
+    Ok(candidate.to_path_buf())
 }
 
 #[tauri::command]
 pub async fn write_text_file(path: String, content: String) -> Result<(), String> {
-    validate_path(&path)?;
-    tokio::fs::write(&path, &content)
+    let target = validate_user_path(&path, true)?;
+    tokio::fs::write(&target, content.as_bytes())
         .await
         .map_err(|e| format!("Failed to write file {}: {}", path, e))
 }
 
 #[tauri::command]
 pub async fn read_text_file(path: String) -> Result<String, String> {
-    validate_path(&path)?;
-    tokio::fs::read_to_string(&path)
+    let target = validate_user_path(&path, false)?;
+    tokio::fs::read_to_string(&target)
         .await
         .map_err(|e| format!("Failed to read file {}: {}", path, e))
 }
@@ -141,4 +154,56 @@ pub struct FileInfo {
     pub path: String,
     pub size: u64,
     pub is_directory: bool,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::validate_user_path;
+
+    #[test]
+    fn rejects_empty_path() {
+        assert!(validate_user_path("   ", false).is_err());
+    }
+
+    #[test]
+    fn rejects_relative_path() {
+        let error = validate_user_path("subtitles/output.srt", true).unwrap_err();
+        assert!(error.contains("绝对路径"), "unexpected error: {error}");
+    }
+
+    #[test]
+    fn rejects_parent_directory_traversal() {
+        let path = format!("{}/../escape.srt", std::env::temp_dir().display());
+        let error = validate_user_path(&path, false).unwrap_err();
+        assert!(error.contains("上级目录"), "unexpected error: {error}");
+    }
+
+    #[test]
+    fn rejects_path_without_file_name() {
+        assert!(validate_user_path("/", false).is_err());
+    }
+
+    #[test]
+    fn accepts_user_selected_export_path_when_parent_exists() {
+        // 导出到用户目录（如桌面）是主流程，必须放行
+        let path = std::env::temp_dir().join("sublens_export.srt");
+        let validated =
+            validate_user_path(&path.to_string_lossy(), true).expect("should be allowed");
+        assert_eq!(validated, path);
+    }
+
+    #[test]
+    fn write_validation_requires_existing_parent_directory() {
+        let missing = std::env::temp_dir()
+            .join("sublens_definitely_missing_dir")
+            .join("out.srt");
+        let error = validate_user_path(&missing.to_string_lossy(), true).unwrap_err();
+        assert!(
+            error.contains("目标目录不存在"),
+            "unexpected error: {error}"
+        );
+
+        // 读取路径不要求父目录存在（仅做语法校验）
+        assert!(validate_user_path(&missing.to_string_lossy(), false).is_ok());
+    }
 }

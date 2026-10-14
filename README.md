@@ -1,11 +1,11 @@
 <div align="center">
 
-# Distill
+# SubLens
 
 **专业视频硬字幕提取与蒸馏工具** — 从视频画面中蒸馏提炼字幕文本，支持离线 OCR 与云端 API 大模型双模式
 
-[![Version](https://img.shields.io/badge/version-0.0.1-10B981?style=flat-square)](https://github.com/Agions/Distill/releases)
-[![License](https://img.shields.io/github/license/Agions/Distill?style=flat-square&color=A855F7)](https://github.com/Agions/Distill/blob/main/LICENSE)
+[![Version](https://img.shields.io/badge/version-0.0.1-10B981?style=flat-square)](https://github.com/Agions/SubLens/releases)
+[![License](https://img.shields.io/github/license/Agions/SubLens?style=flat-square&color=A855F7)](https://github.com/Agions/SubLens/blob/main/LICENSE)
 [![Tauri](https://img.shields.io/badge/Tauri-2.x-3B82F6?style=flat-square)](https://tauri.app)
 [![Vue](https://img.shields.io/badge/Vue-3.5-42b883?style=flat-square)](https://vuejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square)](https://www.typescriptlang.org)
@@ -19,13 +19,13 @@
 <div align="center">
 
 ### 1. 主工作台界面 (Studio Workspace)
-![Distill 主工作台界面](./public/screenshots/app-studio-ui.jpg)
+![SubLens 主工作台界面](./public/screenshots/app-studio-ui.jpg)
 
 ### 2. 8 点手柄硬字幕 ROI 选区与时间轴联动 (ROI Selection & Timeline Sync)
-![Distill ROI 选区交互与时间轴提取截图](./public/screenshots/roi-selection.png)
+![SubLens ROI 选区交互与时间轴提取截图](./public/screenshots/roi-selection.png)
 
-### 3. 全局设置与 API 密钥加密管理 (Settings & Credentials Modal)
-![Distill 设置与凭据管理](./public/screenshots/settings-modal.jpg)
+### 3. 全局设置与 API 凭据管理 (Settings & Credentials Modal)
+![SubLens 设置与凭据管理](./public/screenshots/settings-modal.jpg)
 
 </div>
 
@@ -40,7 +40,7 @@
 | 🪄 **自动定位选区** | 智能分析视频硬字幕边缘轮廓，一键推荐最佳 ROI 归一化选区 |
 | 🤖 **AI 智能字幕润色** | 一键调用云端大模型，修正提取文本中的同音错别字与语法标点 |
 | ⏱️ **双向时间轴联动** | 点击字幕卡片即刻 Seek 视频播放位置；播放时卡片实时高亮 |
-| 🔒 **安全加密凭据管理** | API Key 使用 AES/Base64 本地加密保存，支持随时一键抹除凭据 |
+| 🔒 **本地凭据管理** | API Key 仅做本地可逆混淆，支持一键清除；共享设备请勿保存长期密钥 |
 | 📦 **多格式实时导出** | 支持一键导出为 SRT、VTT、TXT 等多种专业字幕与文本格式 |
 | 🔄 **自动全平台更新** | 集成 Tauri 2.x Auto-Updater，支持后台静默检测与一键热升级 |
 
@@ -49,7 +49,7 @@
 ## 🛠️ 5 层架构设计
 
 ```
-Distill/
+SubLens/
 ├── src/
 │   ├── core/                    # 核心引擎层 (PipelineEngine, AICorrector)
 │   ├── services/                # 服务层 (IOCREngineProvider, LocalOCREngine, CloudOCREngine, TauriBridge, UpdaterService)
@@ -68,8 +68,8 @@ Distill/
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/Agions/Distill.git
-cd Distill
+git clone https://github.com/Agions/SubLens.git
+cd SubLens
 
 # 2. 安装依赖
 pnpm install

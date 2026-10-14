@@ -1,6 +1,6 @@
 type LogLevel = 'error' | 'warn' | 'info' | 'debug'
 
-const PREFIX = '[caption-fab]'
+const PREFIX = '[sublens]'
 
 function log(level: LogLevel, tag: string, message: string, ...args: unknown[]): void {
   const prefix = `${PREFIX} [${tag}]`

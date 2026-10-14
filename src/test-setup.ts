@@ -37,4 +37,7 @@ class ImageDataPolyfill {
   }
 }
 
-;(globalThis as any).ImageData = ImageDataPolyfill
+Object.defineProperty(globalThis, 'ImageData', {
+  configurable: true,
+  value: ImageDataPolyfill as unknown as typeof ImageData,
+})

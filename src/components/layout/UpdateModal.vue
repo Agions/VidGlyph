@@ -91,7 +91,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { UpdaterService, type UpdateInfo } from '../../services/updaterService';
+import { UpdaterService, type UpdateInfo } from '../../services';
+import { useNotification } from '../../composables/useNotification';
 
 const props = defineProps<{
   isOpen: boolean;
@@ -102,6 +103,7 @@ const emit = defineEmits(['close']);
 
 const isDownloading = ref(false);
 const progressPercent = ref(0);
+const notifications = useNotification();
 
 async function startUpdate() {
   if (!props.updateInfo) return;
@@ -120,12 +122,11 @@ async function startUpdate() {
     );
 
     if (success) {
-      // 成功下载并配置升级安装，自动提示并重启
-      alert('更新包安装完成！正在重启应用完成版本应用...');
+      notifications.success('更新包安装完成，应用即将重启');
       emit('close');
     }
-  } catch (err: any) {
-    alert(`自动更新下载安装出现异常: ${err?.message || err}`);
+  } catch (error: unknown) {
+    notifications.error(`自动更新失败：${error instanceof Error ? error.message : String(error)}`);
   } finally {
     isDownloading.value = false;
   }

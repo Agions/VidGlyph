@@ -227,7 +227,7 @@ async fn extract_frame_at_time_impl(
     let uuid = uuid_v4();
     let timestamp_ms = (timestamp_secs * 1000.0) as u64;
     let output_path =
-        std::env::temp_dir().join(format!("captionfab_frame_{}_{}.png", timestamp_ms, uuid));
+        std::env::temp_dir().join(format!("sublens_frame_{}_{}.png", timestamp_ms, uuid));
     let _guard = TempFileGuard::new(output_path.clone()); // Auto-cleanup on function exit
 
     // Build ffmpeg arguments with security flags

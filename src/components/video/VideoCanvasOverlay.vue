@@ -55,8 +55,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { useSubtitleStore } from '../../stores/subtitleStore';
-import type { NormalizedROI } from '../../services/ocr/IOCREngine';
+import { useSubtitleStore } from '../../stores';
+import type { NormalizedROI } from '../../services';
 
 const subtitleStore = useSubtitleStore();
 const containerRef = ref<HTMLDivElement | null>(null);

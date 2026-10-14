@@ -5,6 +5,17 @@
  */
 
 import { TauriBridge } from './tauriBridge';
+import type { DownloadEvent } from '@tauri-apps/plugin-updater';
+
+export interface UpdateHandle {
+  downloadAndInstall(onEvent?: (event: DownloadEvent) => void): Promise<void>;
+}
+
+interface GitHubRelease {
+  tag_name?: string;
+  body?: string;
+  published_at?: string;
+}
 
 export interface UpdateInfo {
   available: boolean;
@@ -12,7 +23,7 @@ export interface UpdateInfo {
   currentVersion: string;
   notes?: string;
   pubDate?: string;
-  rawUpdateObj?: any;
+  rawUpdateObj?: UpdateHandle;
 }
 
 export class UpdaterService {
@@ -28,7 +39,7 @@ export class UpdaterService {
     if (TauriBridge.isTauriEnv()) {
       try {
         const modName = '@tauri-apps/plugin-updater';
-        const updaterMod = await import(/* @vite-ignore */ modName);
+        const updaterMod: typeof import('@tauri-apps/plugin-updater') = await import(/* @vite-ignore */ modName);
         const checkFn = updaterMod.check;
         if (typeof checkFn === 'function') {
           const update = await checkFn();
@@ -48,9 +59,9 @@ export class UpdaterService {
 
     // 网页模式或原生态检查异常时的 GitHub API 检查兜底
     try {
-      const response = await fetch('https://api.github.com/repos/Agions/Distill/releases/latest');
+      const response = await fetch('https://api.github.com/repos/Agions/SubLens/releases/latest');
       if (response.ok) {
-        const data = await response.json();
+        const data = await response.json() as GitHubRelease;
         const latestTag = data.tag_name ? data.tag_name.replace(/^v/, '') : '';
         if (latestTag && this.compareVersions(latestTag, this.CURRENT_VERSION) > 0) {
           info.available = true;
@@ -68,14 +79,14 @@ export class UpdaterService {
 
   /** 执行自动下载安装并重启应用 */
   public static async installUpdate(
-    updateObj: any,
+    updateObj: UpdateHandle | undefined,
     onProgress?: (downloaded: number, total: number) => void
   ): Promise<boolean> {
     if (updateObj && typeof updateObj.downloadAndInstall === 'function') {
       try {
         let downloaded = 0;
         let total = 0;
-        await updateObj.downloadAndInstall((event: any) => {
+        await updateObj.downloadAndInstall((event: DownloadEvent) => {
           if (event.event === 'Started') {
             total = event.data.contentLength || 0;
           } else if (event.event === 'Progress') {
@@ -90,7 +101,7 @@ export class UpdaterService {
       }
     } else {
       // 网页模式直接跳转 GitHub Release 最新下载页面
-      window.open('https://github.com/Agions/Distill/releases/latest', '_blank');
+      window.open('https://github.com/Agions/SubLens/releases/latest', '_blank');
       return false;
     }
   }

@@ -42,7 +42,7 @@ function createBuffer(width: number, height: number): ImageBuffer {
 function bufferToImageData(buf: ImageBuffer): ImageData {
   // Workaround: TypeScript DOM lib types ImageData incorrectly
   // buf.data is Uint8ClampedArray<ArrayBufferLike> but ImageData expects ArrayBuffer
-  return new ImageData(buf.data as any, buf.width, buf.height)
+  return new ImageData(new Uint8ClampedArray(buf.data), buf.width, buf.height)
 }
 
 export interface PreprocessorConfig {
@@ -158,7 +158,7 @@ export function preprocessImage(
     grayBuf.data[i] = gray
     grayBuf.data[i + 1] = gray
     grayBuf.data[i + 2] = gray
-    grayBuf.data[i + 3] = currentData[i + 3] as any
+    grayBuf.data[i + 3] = currentData[i + 3] ?? 255
   }
   currentData = grayBuf.data
 
