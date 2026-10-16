@@ -1,71 +1,157 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="VidGlyph Logo">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="VidGlyph App Icon">
   <title>VidGlyph</title>
-  <desc>VidGlyph · 字映 - 专业视频字幕光学解析工坊 Logo</desc>
+  <desc>VidGlyph · 字映 - 专业视频硬字幕光学解析工坊桌面图标</desc>
 
   <defs>
-    <!-- 暗黑 Slate 主渐变 -->
-    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#090d16"/>
-      <stop offset="50%" stop-color="#0f172a"/>
-      <stop offset="100%" stop-color="#022c22"/>
-    </linearGradient>
+    <!-- 暗黑工作室底色多重径向渐变 -->
+    <radialGradient id="bgBaseGrad" cx="50%" cy="35%" r="75%">
+      <stop offset="0%" stop-color="#141E33"/>
+      <stop offset="45%" stop-color="#0B1120"/>
+      <stop offset="85%" stop-color="#050811"/>
+      <stop offset="100%" stop-color="#020408"/>
+    </radialGradient>
 
-    <!-- Emerald 翡翠高亮渐变 -->
-    <linearGradient id="emeraldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#34d399"/>
-      <stop offset="50%" stop-color="#10b981"/>
+    <!-- 翡翠至青色高能光学辉光渐变 -->
+    <linearGradient id="neonCyanEmerald" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="35%" stop-color="#2DD4BF"/>
+      <stop offset="70%" stop-color="#10B981"/>
       <stop offset="100%" stop-color="#059669"/>
     </linearGradient>
 
-    <!-- 蒸馏光芒与阴影 -->
-    <filter id="emeraldGlow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="10" result="blur"/>
-      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    <!-- 棱镜顶面水晶高光 -->
+    <linearGradient id="prismTopGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.85"/>
+      <stop offset="30%" stop-color="#67E8F9" stop-opacity="0.5"/>
+      <stop offset="70%" stop-color="#34D399" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#0F172A" stop-opacity="0.6"/>
+    </linearGradient>
+
+    <!-- 棱镜左侧面 -->
+    <linearGradient id="prismLeftGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0EA5E9" stop-opacity="0.8"/>
+      <stop offset="50%" stop-color="#0D9488" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#064E3B" stop-opacity="0.9"/>
+    </linearGradient>
+
+    <!-- 棱镜右侧面 -->
+    <linearGradient id="prismRightGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#10B981" stop-opacity="0.95"/>
+      <stop offset="60%" stop-color="#047857" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#064E3B" stop-opacity="0.95"/>
+    </linearGradient>
+
+    <!-- 图标外边框金属光泽渐变 -->
+    <linearGradient id="rimGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.6"/>
+      <stop offset="25%" stop-color="#34D399" stop-opacity="0.3"/>
+      <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.15"/>
+      <stop offset="75%" stop-color="#10B981" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#059669" stop-opacity="0.7"/>
+    </linearGradient>
+
+    <!-- 高级光学辉光滤镜 -->
+    <filter id="laserGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="16" result="blur1"/>
+      <feGaussianBlur stdDeviation="32" result="blur2"/>
+      <feMerge>
+        <feMergeNode in="blur2"/>
+        <feMergeNode in="blur1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
     </filter>
 
-    <clipPath id="logoClip">
-      <rect x="24" y="24" width="464" height="464" rx="96"/>
+    <!-- 柔和环境光晕 -->
+    <filter id="ambientLight" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="64"/>
+    </filter>
+
+    <!-- macOS HIG Squircle 剪裁路径 (平滑超椭圆曲线) -->
+    <clipPath id="squircleClip">
+      <path d="M 512,48 C 768,48 832,48 912,128 C 976,192 976,256 976,512 C 976,768 976,832 912,912 C 832,976 768,976 512,976 C 256,976 192,976 112,912 C 48,832 48,768 48,512 C 48,256 48,192 112,128 C 192,48 256,48 512,48 Z"/>
     </clipPath>
   </defs>
 
-  <!-- 背景：圆角矩形 -->
-  <rect width="512" height="512" rx="128" fill="url(#bgGradient)"/>
+  <!-- 外部投影 -->
+  <path d="M 512,56 C 768,56 832,56 912,136 C 976,200 976,264 976,520 C 976,776 976,840 912,920 C 832,984 768,984 512,984 C 256,984 192,984 112,920 C 48,840 48,776 48,520 C 48,264 48,200 112,136 C 192,56 256,56 512,56 Z" fill="#000000" opacity="0.65" filter="url(#ambientLight)"/>
 
-  <!-- 高光边框 -->
-  <rect x="8" y="8" width="496" height="496" rx="120" fill="none" stroke="url(#emeraldGradient)" stroke-width="3" opacity="0.3"/>
+  <!-- 主图标内容层 (带 Squircle 遮罩) -->
+  <g clip-path="url(#squircleClip)">
+    <!-- 1. 背景底板 -->
+    <rect x="0" y="0" width="1024" height="1024" fill="url(#bgBaseGrad)"/>
 
-  <!-- 主蒸馏标志 (Subtitle Lens & Frame Focus) -->
-  <g transform="translate(256, 200)" filter="url(#emeraldGlow)">
-    <!-- 外层 8 点 ROI 框选句柄框 -->
-    <rect x="-110" y="-90" width="220" height="150" rx="16" fill="none" stroke="url(#emeraldGradient)" stroke-width="6" stroke-dasharray="8 4"/>
+    <!-- 2. 背景中的环境高光雾（Cyan-Emerald 环境光晕） -->
+    <circle cx="512" cy="460" r="280" fill="#10B981" opacity="0.18" filter="url(#ambientLight)"/>
+    <circle cx="420" cy="380" r="220" fill="#0EA5E9" opacity="0.15" filter="url(#ambientLight)"/>
 
-    <!-- 4角 ROI 手柄 -->
-    <circle cx="-110" cy="-90" r="8" fill="#34d399"/>
-    <circle cx="110" cy="-90" r="8" fill="#34d399"/>
-    <circle cx="-110" cy="60" r="8" fill="#34d399"/>
-    <circle cx="110" cy="60" r="8" fill="#34d399"/>
+    <!-- 3. 精细暗网格标尺（体现工业级视频解析度） -->
+    <g opacity="0.1" stroke="#38BDF8" stroke-width="1.5">
+      <line x1="160" y1="512" x2="864" y2="512" stroke-dasharray="8 8"/>
+      <line x1="512" y1="160" x2="512" y2="864" stroke-dasharray="8 8"/>
+      <circle cx="512" cy="512" r="320" fill="none" stroke-dasharray="4 8"/>
+      <circle cx="512" cy="512" r="200" fill="none" stroke-dasharray="4 8"/>
+    </g>
 
-    <!-- 蒸馏核心 'D' 图腾 / 字幕文本提取脉冲 -->
-    <path d="M-50,-50 H10 C30,-50 45,-35 45,-10 C45,15 30,30 10,30 H-50 Z" fill="none" stroke="#ffffff" stroke-width="12" stroke-linejoin="round"/>
-    
-    <!-- 文本音轨/字幕线条 -->
-    <rect x="-32" y="-20" width="48" height="8" rx="4" fill="url(#emeraldGradient)"/>
-    <rect x="-32" y="0" width="32" height="6" rx="3" fill="#ffffff" opacity="0.8"/>
-  </g>
+    <!-- 4. 四角对焦准心 (Framing Focus Marks) -->
+    <g stroke="#34D399" stroke-width="4" stroke-linecap="round" opacity="0.45">
+      <path d="M 220,260 L 220,220 L 260,220"/>
+      <path d="M 804,260 L 804,220 L 764,220"/>
+      <path d="M 220,764 L 220,804 L 260,804"/>
+      <path d="M 804,764 L 804,804 L 764,804"/>
+    </g>
 
-  <!-- 底部 VidGlyph 品牌标志 -->
-  <g transform="translate(256, 400)">
-    <text x="0" y="0" text-anchor="middle"
-          font-family="system-ui, -apple-system, 'Inter', sans-serif"
-          font-size="52" font-weight="800" letter-spacing="-1.5"
-          fill="#ffffff">
-      VidGlyph
-    </text>
-    <text x="0" y="32" text-anchor="middle"
-          font-family="system-ui, -apple-system, 'Inter', sans-serif"
-          font-size="14" font-weight="600" letter-spacing="4"
-          fill="#10b981" opacity="0.9">
-      SUBTITLE EXTRACTION STUDIO
-    </text>
+    <!-- 5. 核心图腾：晶体钻石六边形光学折射棱镜与激光束 (Prism & Laser Beam) -->
+    <g transform="translate(512, 450)">
+      <!-- 折射激光束（从左侧视频源向棱镜聚拢） -->
+      <path d="M -340,-120 L -80,-10 L -340,90 Z" fill="url(#neonCyanEmerald)" opacity="0.18" filter="url(#laserGlow)"/>
+      <line x1="-340" y1="-15" x2="-80" y2="-10" stroke="#38BDF8" stroke-width="3" stroke-dasharray="6 4" opacity="0.6"/>
+
+      <!-- 核心光学晶体等轴测多面体 (Prism Faces) -->
+      <!-- 顶面 -->
+      <polygon points="0,-160 140,-80 0,0 -140,-80" fill="url(#prismTopGrad)" stroke="#E0F2FE" stroke-width="2" stroke-opacity="0.7"/>
+      <!-- 左面 -->
+      <polygon points="-140,-80 0,0 0,160 -140,80" fill="url(#prismLeftGrad)" stroke="#38BDF8" stroke-width="2" stroke-opacity="0.5"/>
+      <!-- 右面 -->
+      <polygon points="0,0 140,-80 140,80 0,160" fill="url(#prismRightGrad)" stroke="#34D399" stroke-width="2" stroke-opacity="0.8"/>
+
+      <!-- 晶体内发光核心 (Inner Optical Seed) -->
+      <circle cx="0" cy="0" r="22" fill="#FFFFFF" filter="url(#laserGlow)"/>
+
+      <!-- 激光出射与字幕波形脉冲（向右上方与水平放射） -->
+      <g filter="url(#laserGlow)">
+        <!-- 象形文字刻线：字母 V 与字符 Glyph 结晶 -->
+        <path d="M -90,-45 L 0,120 L 90,-45" fill="none" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M -90,-45 L 0,120 L 90,-45" fill="none" stroke="url(#neonCyanEmerald)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <!-- 水平字幕光栅波形 (Subtitle Waveforms) -->
+        <rect x="170" y="-70" width="130" height="12" rx="6" fill="#38BDF8" opacity="0.85"/>
+        <rect x="170" y="-40" width="180" height="12" rx="6" fill="#34D399" opacity="0.95"/>
+        <rect x="170" y="-10" width="100" height="12" rx="6" fill="#A7F3D0" opacity="0.9"/>
+        <rect x="170" y="20" width="150" height="12" rx="6" fill="#67E8F9" opacity="0.8"/>
+      </g>
+    </g>
+
+    <!-- 6. 底部品牌微标字样 -->
+    <g transform="translate(512, 800)">
+      <text x="0" y="0" text-anchor="middle"
+            font-family="system-ui, -apple-system, 'SF Pro Display', 'Inter', sans-serif"
+            font-size="64" font-weight="900" letter-spacing="8"
+            fill="#FFFFFF" filter="url(#laserGlow)">
+        VIDGLYPH
+      </text>
+      <text x="0" y="44" text-anchor="middle"
+            font-family="system-ui, -apple-system, 'SF Pro Text', 'Inter', sans-serif"
+            font-size="19" font-weight="700" letter-spacing="9"
+            fill="#34D399" opacity="0.95">
+        OPTICAL SUBTITLE STUDIO
+      </text>
+    </g>
+
+    <!-- 7. 外层镜面倒角高光边框 (Glass Rim & Specular Highlight) -->
+    <path d="M 512,48 C 768,48 832,48 912,128 C 976,192 976,256 976,512 C 976,768 976,832 912,912 C 832,976 768,976 512,976 C 256,976 192,976 112,912 C 48,832 48,768 48,512 C 48,256 48,192 112,128 C 192,48 256,48 512,48 Z"
+          fill="none" stroke="url(#rimGrad)" stroke-width="8" opacity="0.8"/>
+
+    <!-- 8. 顶部环境光倾泻弧 (Top Edge Specular Curve) -->
+    <path d="M 160,110 Q 512,70 864,110" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity="0.4"/>
   </g>
 </svg>
