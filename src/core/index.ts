@@ -1,5 +1,5 @@
 /**
- * core/ — SubLens 领域层公开出口
+ * core/ — VidGlyph 领域层公开出口
  *
  * 分层约定：
  * - `ExtractionConfig` / `ExportValidator`：纯函数规则，可独立单元测试；

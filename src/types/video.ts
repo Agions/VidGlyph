@@ -1,5 +1,5 @@
 /**
- * Video and OCR Types for SubLens
+ * Video and OCR Types for VidGlyph
  *
  * ## Key Types
  *

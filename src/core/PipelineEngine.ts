@@ -9,6 +9,7 @@
  */
 
 import type { NormalizedROI } from '@/services/ocr/IOCREngine'
+import { TauriBridge } from '@/services/tauriBridge'
 import { logger } from '@/utils/logger'
 import {
   DEFAULT_EXTRACTION_OPTIONS,
@@ -32,6 +33,7 @@ const SEEK_FALLBACK_MS = 250
 
 export class PipelineEngine implements ExtractionUseCase {
   private isCancelRequested = false
+  private currentTaskId: string | null = null
   private lastSummary: ExtractionRunSummary | null = null
 
   public constructor(
@@ -85,8 +87,28 @@ export class PipelineEngine implements ExtractionUseCase {
     const totalSteps = Math.max(1, Math.ceil((rangeEnd - rangeStart) / stepSeconds))
 
     this.isCancelRequested = false
+    this.currentTaskId = null
     this.state.setExtracting(true)
     this.state.setProgress(0)
+
+    // 桌面端原生流水线优化路径：当处于 Tauri 桌面端、存在本地文件路径且为本地模式时
+    const nativePath = this.state.getVideoPath?.()
+    if (TauriBridge.isTauriEnv() && nativePath && config.mode === 'local') {
+      const nativeStatus = await TauriBridge.checkNativeOcrReady().catch(() => null)
+      if (nativeStatus?.ready) {
+        logger.info('Pipeline', `启用 Rust 原生流式硬件加速提取: ${nativePath}`)
+        return await this.startNativeExtraction(
+          nativePath,
+          roi,
+          effective,
+          rangeStart,
+          rangeEnd,
+          stepSeconds,
+        )
+      } else {
+        logger.warn('Pipeline', '原生 ONNX 模型未就绪，平滑降级至本地 Canvas OCR 引擎')
+      }
+    }
 
     const summary: ExtractionRunSummary = {
       framesProcessed: 0,
@@ -172,6 +194,99 @@ export class PipelineEngine implements ExtractionUseCase {
 
   public cancel(): void {
     this.isCancelRequested = true
+    if (this.currentTaskId && TauriBridge.isTauriEnv()) {
+      TauriBridge.cancelNativePipeline(this.currentTaskId).catch(() => {})
+    }
+  }
+
+  /**
+   * 启动 Rust 原生硬件加速流式提取管道。
+   */
+  private async startNativeExtraction(
+    videoPath: string,
+    roi: NormalizedROI,
+    options: ExtractionOptions,
+    rangeStart: number,
+    rangeEnd: number,
+    stepSeconds: number,
+  ): Promise<ExtractionResult> {
+    this.isCancelRequested = false
+    this.state.setExtracting(true)
+    this.state.setProgress(0)
+
+    const summary: ExtractionRunSummary = {
+      framesProcessed: 0,
+      framesSkipped: 0,
+      filteredByConfidence: 0,
+      range: [rangeStart, rangeEnd],
+      sampleInterval: stepSeconds,
+    }
+
+    return new Promise<ExtractionResult>((resolve, reject) => {
+      let unlistenFn: (() => void) | null = null
+
+      TauriBridge.startNativePipeline(
+        {
+          videoPath,
+          roi,
+          startTime: rangeStart,
+          endTime: rangeEnd,
+          sampleInterval: stepSeconds,
+          minConfidence: options.minConfidence,
+          language: options.language,
+          enableSceneSkip: true,
+        },
+        {
+          onProgress: (prog) => {
+            this.state.setProgress(Math.round(prog.percent))
+            summary.framesProcessed = prog.framesProcessed
+            summary.framesSkipped = prog.framesSkipped
+          },
+          onSubtitle: (payload) => {
+            const sub = payload.subtitle
+            this.state.addSubtitles([
+              {
+                id: sub.id,
+                startTime: Math.round(sub.start_time * 1000),
+                endTime: Math.round(sub.end_time * 1000),
+                text: sub.text,
+                confidence: Math.round(sub.confidence),
+                roi,
+              },
+            ])
+          },
+          onFinished: (fin) => {
+            if (unlistenFn) unlistenFn()
+            this.currentTaskId = null
+            this.state.setExtracting(false)
+            summary.framesProcessed = fin.framesProcessed
+            summary.framesSkipped = fin.framesSkipped
+            this.lastSummary = summary
+
+            if (fin.status === 'cancelled' || this.isCancelRequested) {
+              resolve('cancelled')
+            } else if (fin.status === 'error') {
+              reject(new Error(fin.errorMessage || '原生提取管道执行失败'))
+            } else {
+              this.state.setProgress(100)
+              resolve('completed')
+            }
+          },
+        },
+      )
+        .then(({ taskId, unlisten }) => {
+          this.currentTaskId = taskId
+          unlistenFn = unlisten
+          if (this.isCancelRequested) {
+            TauriBridge.cancelNativePipeline(taskId).catch(() => {})
+          }
+        })
+        .catch((err) => {
+          this.state.setExtracting(false)
+          this.currentTaskId = null
+          reject(err)
+        })
+    })
   }
 
   /** 用户显式配置优先；否则按视频长度使用启发式步长 */

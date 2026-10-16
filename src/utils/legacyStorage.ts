@@ -1,16 +1,18 @@
 /**
  * @file legacyStorage.ts
- * @description 品牌重命名（Distill / CaptionFab → SubLens）后的本地数据迁移。
+ * @description 品牌重命名（Distill / CaptionFab / SubLens → VidGlyph）后的本地数据迁移。
  *
  * 兼容策略：旧 key 一律「复制」到新 key，不删除原数据，
  * 保证用户凭据 / 配置升级后不丢失，同时允许回滚到旧版本。
  */
 
 const LEGACY_PREFIXES: ReadonlyArray<{ from: string; to: string }> = [
-  { from: 'distill-', to: 'sublens-' },
-  { from: 'distill_', to: 'sublens_' },
-  { from: 'caption-fab', to: 'sublens' },
-  { from: 'captionfab', to: 'sublens' },
+  { from: 'sublens-', to: 'vidglyph-' },
+  { from: 'sublens_', to: 'vidglyph_' },
+  { from: 'distill-', to: 'vidglyph-' },
+  { from: 'distill_', to: 'vidglyph_' },
+  { from: 'caption-fab', to: 'vidglyph' },
+  { from: 'captionfab', to: 'vidglyph' },
 ]
 
 /** 把单个旧 key 映射为新 key；无匹配前缀时返回 null */

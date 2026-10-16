@@ -1,6 +1,6 @@
 # 常见问题
 
-本文档收集了 SubLens 使用中的常见问题和解决方案。
+本文档收集了 VidGlyph 使用中的常见问题和解决方案。
 
 ---
 
@@ -54,5 +54,5 @@ rustc --version   # >= 1.82
 
 ## 获取帮助
 
-- [GitHub Issues](https://github.com/Agions/SubLens/issues)
-- [GitHub Discussions](https://github.com/Agions/SubLens/discussions)
+- [GitHub Issues](https://github.com/Agions/VidGlyph/issues)
+- [GitHub Discussions](https://github.com/Agions/VidGlyph/discussions)

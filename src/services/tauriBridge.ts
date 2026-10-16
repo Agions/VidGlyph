@@ -11,6 +11,7 @@
 
 import { invoke, convertFileSrc } from '@tauri-apps/api/core'
 import { open, save } from '@tauri-apps/plugin-dialog'
+import { listen, type UnlistenFn } from '@tauri-apps/api/event'
 import { logger } from '@/utils/logger'
 
 /**
@@ -79,6 +80,103 @@ const EXPORT_FILTERS: Record<string, { name: string; extensions: string[] }> = {
   jsonl: { name: 'JSON Lines', extensions: ['jsonl'] },
   csv: { name: 'CSV Data', extensions: ['csv'] },
   txt: { name: 'Text File', extensions: ['txt'] },
+}
+
+export interface NativePipelineRequest {
+  taskId?: string
+  videoPath: string
+  roi: { x: number; y: number; width: number; height: number }
+  startTime?: number
+  endTime?: number
+  sampleInterval?: number
+  minConfidence?: number
+  language?: string
+  enableSceneSkip?: boolean
+}
+
+export interface PipelineProgressPayload {
+  taskId: string
+  currentTime: number
+  totalTime: number
+  percent: number
+  framesProcessed: number
+  framesSkipped: number
+  subtitlesCount: number
+}
+
+export interface PipelineSubtitlePayload {
+  taskId: string
+  subtitle: {
+    index: number
+    id: string
+    start_time: number
+    end_time: number
+    text: string
+    confidence: number
+    language?: string
+  }
+}
+
+export interface PipelineFinishedPayload {
+  taskId: string
+  status: 'completed' | 'cancelled' | 'error'
+  totalFrames: number
+  framesProcessed: number
+  framesSkipped: number
+  subtitlesCount: number
+  elapsedMs: number
+  errorMessage?: string
+}
+
+export interface NativeOcrStatus {
+  ready: boolean
+  detExists: boolean
+  recExists: boolean
+  modelDir: string
+}
+
+export interface ProjectRecord {
+  id: string
+  name: string
+  videoPath: string
+  videoHash?: string | null
+  durationMs: number
+  width: number
+  height: number
+  fps: number
+  roiJson: string
+  createdAt: number
+  updatedAt: number
+}
+
+export interface SubtitleRecord {
+  id: string
+  projectId: string
+  startTimeMs: number
+  endTimeMs: number
+  textRaw: string
+  textCorrected?: string | null
+  confidence: number
+  bboxJson?: string | null
+  isReviewed: boolean
+  createdAt: number
+}
+
+export interface BatchTaskRecord {
+  id: string
+  projectId?: string | null
+  videoPath: string
+  status: string
+  progress: number
+  configJson: string
+  errorMsg?: string | null
+  createdAt: number
+  finishedAt?: number | null
+}
+
+export interface ProjectDetail {
+  project: ProjectRecord
+  subtitles: SubtitleRecord[]
 }
 
 export class TauriBridge {
@@ -210,4 +308,153 @@ export class TauriBridge {
       )
     }
   }
+
+  /** 检查本地原生 ONNX 模型是否已就绪 */
+  public static async checkNativeOcrReady(): Promise<NativeOcrStatus | null> {
+    if (!this.isTauriEnv()) return null
+    return await invoke<NativeOcrStatus>('check_native_ocr_ready')
+  }
+
+  /** 取消正在运行的原生提取任务 */
+  public static async cancelNativePipeline(taskId: string): Promise<void> {
+    if (!this.isTauriEnv()) return
+    await invoke('cancel_native_pipeline', { taskId })
+  }
+
+  /**
+   * 启动原生高性能流式提取管道。
+   * 通过 Tauri Event 实时推送抽帧进度、检测出的字幕项与结束事件。
+   */
+  public static async startNativePipeline(
+    request: NativePipelineRequest,
+    callbacks: {
+      onProgress?: (progress: PipelineProgressPayload) => void
+      onSubtitle?: (subtitle: PipelineSubtitlePayload) => void
+      onFinished?: (finished: PipelineFinishedPayload) => void
+    } = {},
+  ): Promise<{ taskId: string; unlisten: () => void }> {
+    if (!this.isTauriEnv()) {
+      throw new Error('原生提取管道仅在 Tauri 客户端容器中可用')
+    }
+
+    const unlistens: UnlistenFn[] = []
+
+    if (callbacks.onProgress) {
+      const u = await listen<PipelineProgressPayload>('vidglyph://pipeline-progress', (event) => {
+        if (!request.taskId || event.payload.taskId === request.taskId) {
+          callbacks.onProgress?.(event.payload)
+        }
+      })
+      unlistens.push(u)
+    }
+
+    if (callbacks.onSubtitle) {
+      const u = await listen<PipelineSubtitlePayload>('vidglyph://pipeline-subtitle', (event) => {
+        if (!request.taskId || event.payload.taskId === request.taskId) {
+          callbacks.onSubtitle?.(event.payload)
+        }
+      })
+      unlistens.push(u)
+    }
+
+    if (callbacks.onFinished) {
+      const u = await listen<PipelineFinishedPayload>('vidglyph://pipeline-finished', (event) => {
+        if (!request.taskId || event.payload.taskId === request.taskId) {
+          callbacks.onFinished?.(event.payload)
+        }
+      })
+      unlistens.push(u)
+    }
+
+    const cleanup = () => {
+      for (const u of unlistens) {
+        try {
+          u()
+        } catch {
+          // ignore
+        }
+      }
+      unlistens.length = 0
+    }
+
+    try {
+      const taskId = await invoke<string>('start_native_pipeline', { request })
+      return { taskId, unlisten: cleanup }
+    } catch (err) {
+      cleanup()
+      throw err
+    }
+  }
+
+  // ─── OS 安全凭据与密钥环 ────────────────────────────────────────────────
+
+  /** 保存敏感 API 凭据到操作系统原生密钥环（macOS Keychain / 加密保险库） */
+  public static async saveSecureCredential(service: string, account: string, secret: string): Promise<void> {
+    if (!this.isTauriEnv()) return
+    await invoke('save_secure_credential', { service, account, secret })
+  }
+
+  /** 从操作系统原生密钥环读取凭据 */
+  public static async getSecureCredential(service: string, account: string): Promise<string | null> {
+    if (!this.isTauriEnv()) return null
+    return await invoke<string | null>('get_secure_credential', { service, account })
+  }
+
+  /** 从操作系统原生密钥环抹除凭据 */
+  public static async deleteSecureCredential(service: string, account: string): Promise<void> {
+    if (!this.isTauriEnv()) return
+    await invoke('delete_secure_credential', { service, account })
+  }
+
+  // ─── SQLite 本地工程与任务持久化 ──────────────────────────────────────────
+
+  /** 保存或更新完整项目及其字幕集合（事务级原子落盘） */
+  public static async dbSaveProject(project: ProjectRecord, subtitles: SubtitleRecord[]): Promise<string> {
+    if (!this.isTauriEnv()) throw new Error('SQLite 本地持久化仅在桌面客户端支持')
+    return await invoke<string>('db_save_project', { project, subtitles })
+  }
+
+  /** 读取项目详情及其全部字幕条目 */
+  public static async dbLoadProject(projectId: string): Promise<ProjectDetail | null> {
+    if (!this.isTauriEnv()) return null
+    return await invoke<ProjectDetail | null>('db_load_project', { projectId })
+  }
+
+  /** 获取所有已保存的项目列表概要 */
+  public static async dbListProjects(): Promise<ProjectRecord[]> {
+    if (!this.isTauriEnv()) return []
+    return await invoke<ProjectRecord[]>('db_list_projects')
+  }
+
+  /** 删除项目及其所有关联字幕 */
+  public static async dbDeleteProject(projectId: string): Promise<void> {
+    if (!this.isTauriEnv()) return
+    await invoke('db_delete_project', { projectId })
+  }
+
+  /** 保存或更新批处理任务记录 */
+  public static async dbSaveBatchTask(task: BatchTaskRecord): Promise<void> {
+    if (!this.isTauriEnv()) return
+    await invoke('db_save_batch_task', { task })
+  }
+
+  /** 查询所有批处理任务列表 */
+  public static async dbListBatchTasks(): Promise<BatchTaskRecord[]> {
+    if (!this.isTauriEnv()) return []
+    return await invoke<BatchTaskRecord[]>('db_list_batch_tasks')
+  }
+
+  /** 导出独立 .vidglyph 工程包 */
+  public static async exportProjectBundle(projectId: string, outputPath: string): Promise<string> {
+    if (!this.isTauriEnv()) throw new Error('工程导出仅在桌面客户端支持')
+    return await invoke<string>('export_project_bundle', { projectId, outputPath })
+  }
+
+  /** 导入 .vidglyph 工程包并载入数据库 */
+  public static async importProjectBundle(bundlePath: string): Promise<ProjectDetail> {
+    if (!this.isTauriEnv()) throw new Error('工程导入仅在桌面客户端支持')
+    return await invoke<ProjectDetail>('import_project_bundle', { bundlePath })
+  }
 }
+
+

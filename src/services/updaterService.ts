@@ -59,14 +59,14 @@ export class UpdaterService {
 
     // 网页模式或原生态检查异常时的 GitHub API 检查兜底
     try {
-      const response = await fetch('https://api.github.com/repos/Agions/SubLens/releases/latest');
+      const response = await fetch('https://api.github.com/repos/Agions/VidGlyph/releases/latest');
       if (response.ok) {
         const data = await response.json() as GitHubRelease;
         const latestTag = data.tag_name ? data.tag_name.replace(/^v/, '') : '';
         if (latestTag && this.compareVersions(latestTag, this.CURRENT_VERSION) > 0) {
           info.available = true;
           info.version = latestTag;
-          info.notes = data.body || '专业硬字幕提取与蒸馏工具版本更新。';
+          info.notes = data.body || 'VidGlyph · 字映 视频字幕光学解析工坊版本更新。';
           info.pubDate = data.published_at;
         }
       }
@@ -101,7 +101,7 @@ export class UpdaterService {
       }
     } else {
       // 网页模式直接跳转 GitHub Release 最新下载页面
-      window.open('https://github.com/Agions/SubLens/releases/latest', '_blank');
+      window.open('https://github.com/Agions/VidGlyph/releases/latest', '_blank');
       return false;
     }
   }

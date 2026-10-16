@@ -19,47 +19,43 @@ SubLens 是一个 Tauri 2 + Vue 3 + Rust 桌面应用：从视频画面中提取
 | `TauriBridge.detectScenes` / `ocrRecognizeNative` 参数名与 Rust 命令不一致 | 调用必然失败（当时无消费者，属隐藏缺陷） |
 | 文档声称本地引擎「支持预处理降噪」，但代码未接入 `image-preprocessor` | 功能与文档不符 |
 
-## 2. 项目重命名：`Distill` → `SubLens`
+## 2. 项目重命名演进：`Distill` → `CaptionFab` → `SubLens` → `VidGlyph · 字映`
 
 ### 命名论证
 
 | 维度 | 说明 |
 | --- | --- |
-| 业务准确 | `Sub` = Subtitle，直指「字幕」；旧名 `Distill`（蒸馏）是隐喻，无法体现字幕提取 |
-| 交互隐喻 | `Lens` = 透镜/取景，贴合「在视频画面上框选区域、逐帧观察」的核心交互 |
-| 技术栈中立 | 不绑定 Tauri / OCR / Vue，离线与云端引擎都能容纳 |
-| 可扩展 | 便于衍生 `SubLens Studio`（桌面）、`SubLens CLI`（批处理）、`SubLens Cloud`（服务端） |
-| 检索友好 | 单一词、易拼读、无先前品牌的历史包袱（仓库曾用 `CaptionFab`、`Distill`） |
+| 业务准确 | `Vid` = Video 视频，`Glyph` = 字符/铭文，直指「从视频画面中解析光学字符并精雕细琢」 |
+| 交互隐喻 | 既涵盖视频播放多轨定位，又呈现硬字幕文字提炼与 AI 纠错工坊的专业定位 |
+| 防侵权合规 | 规避了 `SubLens` 现存 GitHub、插件商店和 App Store 的多重同名冲突，商标及开源命名空间纯净 |
+| 技术栈中立 | 适配桌面端本地优先 + 云端 AI 模型多轨并进 |
+| 检索友好 | 具备高区分度唯一词、易拼读无负面歧义 |
 
 ### 标识映射
 
-| 位置 | 重构前 | 重构后 |
+| 位置 | 历史名称 | 最终更名 (VidGlyph) |
 | --- | --- | --- |
-| npm 包名 | `distill` | `sublens` |
-| Rust crate / lib | `distill` / `distill_lib` | `sublens` / `sublens_lib` |
-| 应用标识 | `com.distill.desktop` | `com.agions.sublens.desktop` |
-| 产品名 / 窗口标题 | `Distill` | `SubLens` |
-| 本地存储前缀 | `distill-*` / `distill_*` | `sublens-*` / `sublens_*` |
-| 凭据盐值 | `Distill_Salt_2026_Secure` | `SubLens_Salt_2026_Secure` |
-| 导出文件名兜底 | `distill_subtitles.<ext>` | `sublens_subtitles.<ext>` |
-| 全局样式类 | `.distill-app` | `.sublens-app` |
-| 日志前缀 | `[caption-fab]` | `[sublens]` |
-| 导出元信息 | `Title: Distill Export` / `[by:Distill v4.0]` | `Title: SubLens Export` / `[by:SubLens v4.0]` |
-| 仓库地址 | `github.com/Agions/Distill` | `github.com/Agions/SubLens` |
+| npm 包名 | `distill` / `sublens` | `vidglyph` |
+| Rust crate / lib | `distill` / `sublens` | `vidglyph` / `vidglyph_lib` |
+| 应用标识 | `com.distill.desktop` / `com.agions.sublens.desktop` | `com.agions.vidglyph.desktop` |
+| 产品名 / 窗口标题 | `Distill` / `SubLens` | `VidGlyph · 字映` |
+| 本地存储前缀 | `distill-*` / `sublens-*` | `vidglyph-*` / `vidglyph_*` |
+| 凭据盐值 | `Distill_Salt_2026_Secure` | `VidGlyph_Salt_2026_Secure` |
+| 导出文件名兜底 | `distill_subtitles.<ext>` | `vidglyph_subtitles.<ext>` |
+| 全局样式类 | `.distill-app` / `.sublens-app` | `.vidglyph-app` |
+| 日志前缀 | `[distill]` / `[sublens]` | `[vidglyph]` |
+| 导出元信息 | `Title: Distill Export` | `Title: VidGlyph Export` |
+| 仓库地址 | `github.com/Agions/Distill` | `github.com/Agions/VidGlyph` |
 
-覆盖 64 个文件：前端源码、Rust 源码、`package.json`、`Cargo.toml`、`tauri.conf.json`、
-capabilities、CI/CD 工作流、VitePress 配置、README 与全部指南文档、品牌 SVG 与预览页。
+覆盖全工程前端源码、Rust 源码、`package.json`、`Cargo.toml`、`tauri.conf.json`、capabilities、CI/CD 工作流、VitePress 配置、README 与全部指南文档、品牌 SVG 与预览页。
 
 ### 兼容措施（保证业务逻辑与用户数据不丢失）
 
-1. **本地数据迁移**：新增 `utils/legacyStorage`，启动时把 `distill-*`、`distill_*`、`caption-fab*`、`captionfab*`
-   键**复制**到 `sublens-*`（目标键已存在时不覆盖），旧键保留以便回滚；API Key 与提取配置因此无缝保留。
-2. **仓库地址**：GitHub 更名后旧 URL 会自动 302 到新地址，`updater` 端点与文档链接同步更新为新仓库名。
-3. **需人工执行的外部动作**（代码无法代为完成）：
-   - GitHub 仓库改名为 `Agions/SubLens`（否则自动更新检查会 404）；
-   - 工作区目录 `distill/` 改名为 `sublens/`；
-   - 应用标识变更会导致数据目录从 `…/com.distill.desktop` 迁移到 `…/com.agions.sublens.desktop`，
-     如需保留旧目录内的模型缓存，请在改名前手工拷贝。
+1. **本地数据无缝迁移**：通过 `utils/legacyStorage`，启动时自动把 `distill-*`、`distill_*`、`caption-fab*`、`sublens-*` 键安全迁移至 `vidglyph-*`，旧键保留以便回滚。
+2. **仓库地址**：GitHub 更名后旧 URL 会自动 302 重定向到新地址，`updater` 端点与文档链接同步更新为 `Agions/VidGlyph`。
+3. **本地目录与外部动作**：
+   - 工作区目录 `distill/` 重命名为 `vidglyph/`；
+   - 远程仓库同步设置为 `https://github.com/Agions/VidGlyph.git`。
 
 ## 3. 重构前后对比总览
 

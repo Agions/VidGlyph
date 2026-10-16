@@ -1,6 +1,6 @@
 # 开发者指南
 
-欢迎为 sublens 贡献代码！本文档涵盖环境搭建、代码规范、测试和发布流程。
+欢迎为 VidGlyph 贡献代码！本文档涵盖环境搭建、代码规范、测试和发布流程。
 
 ---
 
@@ -19,8 +19,8 @@
 ### 克隆仓库
 
 ```bash
-git clone https://github.com/Agions/SubLens.git
-cd sublens
+git clone https://github.com/Agions/VidGlyph.git
+cd vidglyph
 ```
 
 ### 安装依赖
@@ -46,7 +46,7 @@ pnpm tauri dev
 ## 项目结构
 
 ```
-sublens/
+vidglyph/
 ├── src/
 │   ├── app.vue                 # 组合根：装配组件与全局事件
 │   ├── components/

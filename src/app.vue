@@ -5,6 +5,8 @@ import VideoPlayer from './components/video/VideoPlayer.vue'
 import SubtitleTimelineList from './components/subtitle/SubtitleTimelineList.vue'
 import SettingsModal from './components/layout/SettingsModal.vue'
 import UpdateModal from './components/layout/UpdateModal.vue'
+import ProjectModal from './components/project/ProjectModal.vue'
+import BatchWorkspaceModal from './components/batch/BatchWorkspaceModal.vue'
 import Toast from './components/common/toast.vue'
 import { useSubtitleStore } from './stores'
 import { useWorkspaceController } from './composables/useWorkspaceController'
@@ -14,6 +16,8 @@ import { useNotification } from './composables/useNotification'
 const subtitleStore = useSubtitleStore()
 const videoPlayerRef = ref<InstanceType<typeof VideoPlayer> | null>(null)
 const notifications = useNotification()
+const isProjectsOpen = ref(false)
+const isBatchOpen = ref(false)
 const {
   isSettingsOpen,
   isUpdateOpen,
@@ -47,12 +51,14 @@ async function handleAutoRoi() {
 </script>
 
 <template>
-  <div class="sublens-app">
+  <div class="vidglyph-app">
     <TopToolbar
       :is-detecting-roi="isDetecting"
       @start-extraction="handleStartExtraction"
       @cancel-extraction="cancelExtraction"
       @open-settings="isSettingsOpen = true"
+      @open-projects="isProjectsOpen = true"
+      @open-batch="isBatchOpen = true"
       @auto-roi="handleAutoRoi"
     />
     <main class="workspace-main" aria-label="字幕提取工作台">
@@ -68,6 +74,14 @@ async function handleAutoRoi() {
       @close="isSettingsOpen = false"
       @update-found="handleUpdateFound"
     />
+    <ProjectModal
+      :is-open="isProjectsOpen"
+      @close="isProjectsOpen = false"
+    />
+    <BatchWorkspaceModal
+      :is-open="isBatchOpen"
+      @close="isBatchOpen = false"
+    />
     <UpdateModal
       :is-open="isUpdateOpen"
       :update-info="currentUpdateInfo"
@@ -80,7 +94,7 @@ async function handleAutoRoi() {
 <style>
 @import 'assets/styles/global.scss';
 
-.sublens-app {
+.vidglyph-app {
   width: 100vw;
   height: 100vh;
   display: flex;

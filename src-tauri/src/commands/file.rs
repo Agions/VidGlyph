@@ -85,6 +85,7 @@ pub async fn open_file_dialog(
 /// 仍然拦截两类真实风险：
 /// 1. 非绝对路径（相对路径语义不确定，易被利用）；
 /// 2. 包含 `..` 上级目录引用（路径遍历）。
+///
 /// 写入时额外要求父目录已存在，避免静默创建非预期目录。
 fn validate_user_path(path: &str, require_existing_parent: bool) -> Result<PathBuf, String> {
     if path.trim().is_empty() {
@@ -186,7 +187,7 @@ mod tests {
     #[test]
     fn accepts_user_selected_export_path_when_parent_exists() {
         // 导出到用户目录（如桌面）是主流程，必须放行
-        let path = std::env::temp_dir().join("sublens_export.srt");
+        let path = std::env::temp_dir().join("vidglyph_export.srt");
         let validated =
             validate_user_path(&path.to_string_lossy(), true).expect("should be allowed");
         assert_eq!(validated, path);
@@ -195,7 +196,7 @@ mod tests {
     #[test]
     fn write_validation_requires_existing_parent_directory() {
         let missing = std::env::temp_dir()
-            .join("sublens_definitely_missing_dir")
+            .join("vidglyph_definitely_missing_dir")
             .join("out.srt");
         let error = validate_user_path(&missing.to_string_lossy(), true).unwrap_err();
         assert!(

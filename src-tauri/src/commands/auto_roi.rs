@@ -216,7 +216,7 @@ pub(crate) async fn extract_frame_for_detection(
 
     // Use a UUID-based temp file to avoid race conditions
     let uuid = uuid_v4();
-    let output_path = std::env::temp_dir().join(format!("sublens_roi_frame_{}.png", uuid));
+    let output_path = std::env::temp_dir().join(format!("vidglyph_roi_frame_{}.png", uuid));
     let guard = TempFileGuard::new(output_path.clone());
 
     let ts_str = format!("{}", timestamp);

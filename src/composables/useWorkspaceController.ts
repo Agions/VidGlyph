@@ -30,6 +30,7 @@ export function useWorkspaceController() {
         preprocessDenoise: extractionSettings.options.preprocessDenoise,
       }),
       getExtractionOptions: () => extractionSettings.options,
+      getVideoPath: () => subtitleStore.videoPath || null,
       setExtracting: (extracting) => { subtitleStore.isExtracting = extracting },
       setProgress: (percent) => { subtitleStore.progressPercent = percent },
       addSubtitles: (items) => subtitleStore.addSubtitles(items),
@@ -123,15 +124,15 @@ export function useWorkspaceController() {
     ctx.textAlign = 'center'
     ctx.lineWidth = 6
     ctx.strokeStyle = '#000000'
-    ctx.strokeText('欢迎使用 SubLens 智能硬字幕提取工具', 640, 620)
+    ctx.strokeText('欢迎使用 VidGlyph · 字映 智能硬字幕提取工坊', 640, 620)
     ctx.fillStyle = '#ffffff'
-    ctx.fillText('欢迎使用 SubLens 智能硬字幕提取工具', 640, 620)
+    ctx.fillText('欢迎使用 VidGlyph · 字映 智能硬字幕提取工坊', 640, 620)
 
     const dataUrl = canvas.toDataURL('image/png')
     subtitleStore.videoUrl = dataUrl
     subtitleStore.videoPath = ''
     subtitleStore.videoPoster = dataUrl
-    subtitleStore.videoFileName = 'SubLens_Demo_4K_Movie.mp4'
+    subtitleStore.videoFileName = 'VidGlyph_Demo_4K_Movie.mp4'
     subtitleStore.videoDuration = 185.5
     subtitleStore.videoWidth = 1280
     subtitleStore.videoHeight = 720
@@ -139,7 +140,7 @@ export function useWorkspaceController() {
     subtitleStore.isRoiActive = true
     subtitleStore.setROI({ x: 0.1, y: 0.7, width: 0.8, height: 0.2 })
     subtitleStore.subtitles = [
-      { id: 'sub_1', startTime: 3200, endTime: 6800, text: '欢迎使用 SubLens 智能硬字幕提取工具', confidence: 98 },
+      { id: 'sub_1', startTime: 3200, endTime: 6800, text: '欢迎使用 VidGlyph · 字映 智能硬字幕提取工坊', confidence: 98 },
       { id: 'sub_2', startTime: 7200, endTime: 11500, text: '自动识别视频硬字幕区域与多语言文本', confidence: 96 },
       { id: 'sub_3', startTime: 12000, endTime: 16800, text: '支持 AI 错别字校对与多格式字幕实时导出', confidence: 95 },
     ]

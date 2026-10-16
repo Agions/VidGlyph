@@ -1,4 +1,4 @@
-//! Unit tests for SubLens Tauri backend
+//! Unit tests for VidGlyph Tauri backend
 
 #[cfg(test)]
 mod tests {

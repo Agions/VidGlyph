@@ -129,7 +129,7 @@ describe('SubtitleExporter', () => {
       const result = exporter.export([createSub()], 'json').content
       const parsed = JSON.parse(result)
       expect(parsed.version).toBe('3.0')
-      expect(parsed.tool.toLowerCase()).toContain('sublens')
+      expect(parsed.tool.toLowerCase()).toContain('vidglyph')
     })
   })
 

@@ -68,10 +68,23 @@
           重试失败 ({{ failedItems.length }})
         </button>
 
+        <!-- 润色对比审核 -->
+        <button
+          v-if="diffEntries.length > 0"
+          class="flex items-center gap-1 px-2.5 py-1.5 bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-700/80 text-indigo-300 text-xs font-semibold rounded-lg shadow transition cursor-pointer"
+          title="查看并审核 AI 润色对比差异"
+          @click="isDiffModalOpen = true"
+        >
+          <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/>
+          </svg>
+          <span>对比 ({{ diffEntries.length }})</span>
+        </button>
+
         <button
           v-if="subtitleStore.subtitleCount > 0"
           class="px-2.5 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-rose-400 rounded-lg transition border border-slate-700 cursor-pointer"
-          @click="subtitleStore.clearSubtitles"
+          @click="onClearSubtitles"
         >
           清空
         </button>
@@ -100,22 +113,55 @@
       </div>
     </div>
 
-    <!-- 搜索与筛选 -->
-    <div v-if="subtitleStore.subtitleCount > 0" class="px-4 py-2 bg-slate-950/70 border-b border-slate-800 flex items-center gap-2">
-      <input
-        v-model="keyword"
-        type="search"
-        placeholder="搜索字幕文本（空格分隔多个关键词）"
-        class="flex-1 bg-slate-900 border border-slate-800 focus:border-emerald-500 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none"
-      />
-      <select
-        v-model="confidenceFilter"
-        class="bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-slate-200 focus:outline-none"
-      >
-        <option value="all">全部置信度</option>
-        <option value="low">低置信度 (&lt;60%)</option>
-        <option value="high">高置信度 (≥90%)</option>
-      </select>
+    <!-- 搜索与筛选工具条 -->
+    <div v-if="subtitleStore.subtitleCount > 0" class="px-4 py-2.5 bg-slate-950/80 border-b border-slate-800/80 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+      <div class="relative flex-1">
+        <svg class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <input
+          v-model="keyword"
+          type="search"
+          placeholder="搜索字幕文本（空格分隔多词检索）..."
+          class="w-full bg-slate-900 border border-slate-800 focus:border-emerald-500/80 focus:ring-1 focus:ring-emerald-500/40 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none transition"
+        />
+      </div>
+
+      <div class="flex items-center gap-1.5 shrink-0">
+        <button
+          :class="[
+            'text-[11px] px-2.5 py-1 rounded-md transition cursor-pointer font-medium border',
+            confidenceFilter === 'all'
+              ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40 shadow-xs'
+              : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
+          ]"
+          @click="confidenceFilter = 'all'"
+        >
+          全部
+        </button>
+        <button
+          :class="[
+            'text-[11px] px-2.5 py-1 rounded-md transition cursor-pointer font-medium border',
+            confidenceFilter === 'low'
+              ? 'bg-amber-500/15 text-amber-300 border-amber-500/40 shadow-xs'
+              : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
+          ]"
+          @click="confidenceFilter = 'low'"
+        >
+          需关注 (&lt;60%)
+        </button>
+        <button
+          :class="[
+            'text-[11px] px-2.5 py-1 rounded-md transition cursor-pointer font-medium border',
+            confidenceFilter === 'high'
+              ? 'bg-teal-500/15 text-teal-300 border-teal-500/40 shadow-xs'
+              : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
+          ]"
+          @click="confidenceFilter = 'high'"
+        >
+          高置信 (≥90%)
+        </button>
+      </div>
     </div>
 
     <!-- 提取进度条动画 -->
@@ -167,27 +213,38 @@
     </div>
 
     <!-- 时间轴字幕卡片列表（点击跳转播放位置 / 播放时实时高亮） -->
-    <div v-else class="flex-1 overflow-y-auto p-3 space-y-2.5 divide-y divide-slate-800/40">
+    <div v-else class="flex-1 overflow-y-auto p-3 space-y-2.5">
       <div
         v-for="(item, position) in visibleSubtitles"
         :key="item.id"
         :class="[
-          'pt-2.5 first:pt-0 group flex flex-col gap-1.5 p-2.5 rounded-lg transition cursor-pointer border',
+          'group flex flex-col gap-2 p-3 rounded-xl transition-all cursor-pointer border',
           item.id === activeSubtitleId
-            ? 'bg-emerald-950/40 border-emerald-500/80 shadow-md shadow-emerald-950/50'
-            : 'bg-slate-950/60 hover:bg-slate-950 border-slate-800/80'
+            ? 'bg-emerald-950/30 border-emerald-500/80 shadow-lg shadow-emerald-950/60 ring-1 ring-emerald-500/30'
+            : 'bg-slate-950/70 hover:bg-slate-950/95 border-slate-800/80 hover:border-slate-700/90'
         ]"
         @click="seekToSubtitle(item.startTime)"
       >
         <!-- 卡片 Top 时间码 & 置信度 Badge -->
         <div class="flex items-center justify-between text-xs font-mono">
-          <div class="flex items-center gap-2 text-emerald-400">
-            <span class="px-1.5 py-0.5 rounded bg-emerald-950 border border-emerald-800/60 text-[11px] font-bold">
-              {{ formatTime(item.startTime) }}
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded-md bg-slate-900 border border-slate-800 text-[11px] font-bold text-emerald-400 group-hover:border-emerald-500/40 transition">
+              #{{ position + 1 }} · {{ formatTime(item.startTime) }}
             </span>
           </div>
 
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-1.5">
+            <!-- 一键复制文本 -->
+            <button
+              class="text-slate-400 hover:text-emerald-300 opacity-60 group-hover:opacity-100 transition p-1 rounded hover:bg-slate-800 cursor-pointer"
+              title="复制文本到剪贴板"
+              @click.stop="copyText(item.text)"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+              </svg>
+            </button>
+
             <!-- 润色失败与快捷重试 -->
             <button
               v-if="failedItemMap.has(item.id)"
@@ -195,7 +252,7 @@
               :title="`润色失败：${failedItemMap.get(item.id)?.reason}。点击单条重试`"
               @click.stop="retrySingleCorrection(item.id)"
             >
-              <span>重试润色</span>
+              <span>重试</span>
             </button>
 
             <!-- 时间轴质量问题提示 -->
@@ -207,21 +264,25 @@
               ]"
               :title="itemIssueMap.get(position + 1)?.message"
             >
-              {{ itemIssueMap.get(position + 1)?.level === 'error' ? '格式异常' : '时间轴重叠' }}
+              {{ itemIssueMap.get(position + 1)?.level === 'error' ? '异常' : '重叠' }}
             </span>
 
             <!-- 置信度分值 -->
             <span
               :class="[
                 'text-[10px] px-1.5 py-0.5 rounded font-mono font-semibold',
-                item.confidence >= 90 ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-amber-950 text-amber-300 border border-amber-800'
+                item.confidence >= 90
+                  ? 'bg-emerald-950/70 text-emerald-300 border border-emerald-800/80'
+                  : item.confidence >= 60
+                  ? 'bg-amber-950/70 text-amber-300 border border-amber-800/80'
+                  : 'bg-rose-950/70 text-rose-300 border border-rose-800/80'
               ]"
             >
-              准确度 {{ Math.round(item.confidence) }}%
+              {{ Math.round(item.confidence) }}%
             </span>
 
             <button
-              class="text-slate-500 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition p-1 cursor-pointer"
+              class="text-slate-500 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition p-1 rounded hover:bg-slate-800 cursor-pointer"
               title="删除此条"
               @click.stop="subtitleStore.removeSubtitle(item.id)"
             >
@@ -234,12 +295,22 @@
         <textarea
           :value="item.text"
           rows="2"
-          class="w-full bg-slate-900 border border-slate-800 focus:border-emerald-500 text-slate-100 text-xs rounded p-2 resize-none focus:outline-none transition font-sans cursor-text"
+          class="w-full bg-slate-900/90 border border-slate-800/90 focus:border-emerald-500/80 focus:ring-1 focus:ring-emerald-500/40 text-slate-100 text-xs rounded-lg p-2.5 resize-none focus:outline-none transition font-sans cursor-text leading-relaxed"
           @click.stop
           @input="onTextChange(item.id, $event)"
         ></textarea>
       </div>
     </div>
+
+    <!-- AI 润色对比审核弹窗 -->
+    <CorrectionDiffModal
+      :is-open="isDiffModalOpen"
+      :entries="diffEntries"
+      @close="isDiffModalOpen = false"
+      @apply-all="handleApplyAll"
+      @revert-all="handleRevertAll"
+      @toggle-entry="handleToggleEntry"
+    />
   </div>
 </template>
 
@@ -250,6 +321,7 @@ import { useSecurityStore } from '../../stores';
 import { TimecodeConverter } from '../../utils/TimecodeConverter';
 import { SubtitleExporter, type ExportFormat } from '../../utils/SubtitleExporter';
 import { filterSubtitleItems, findSubtitleAtTime, type ConfidenceFilter } from '../../utils/subtitleSearch';
+import CorrectionDiffModal, { type DiffEntry } from './CorrectionDiffModal.vue';
 import { TauriBridge } from '../../services';
 import {
   AICorrector,
@@ -357,9 +429,28 @@ function onTextChange(id: string, e: Event) {
   subtitleStore.updateSubtitleText(id, target.value);
 }
 
-// ─── AI 润色：进度 / 取消 / 失败重试 ──────────────────────────
+async function copyText(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    notifications.success('已复制字幕文本至剪贴板');
+  } catch {
+    notifications.warn('复制失败，请手动选择复制');
+  }
+}
+
+// ─── AI 润色：进度 / 取消 / 失败重试 / 对比审核 ──────────────
 const { isRunning: isAiRunning, progress: aiProgress, run, retryFailed, cancel } = useAiCorrection();
 const failedItems = ref<AiCorrectionFailure[]>([]);
+const isDiffModalOpen = ref(false);
+const diffEntries = ref<DiffEntry[]>([]);
+const originalTextMap = ref<Map<string, string>>(new Map());
+
+function onClearSubtitles() {
+  subtitleStore.clearSubtitles();
+  diffEntries.value = [];
+  originalTextMap.value.clear();
+  failedItems.value = [];
+}
 
 const failedItemMap = computed(() => {
   const map = new Map<string, AiCorrectionFailure>();
@@ -387,7 +478,54 @@ function buildCorrector(): AICorrector {
 }
 
 function applyCorrectedText(id: string, text: string) {
+  const orig = originalTextMap.value.get(id) ?? '';
   subtitleStore.updateSubtitleText(id, text);
+  if (orig && orig !== text) {
+    const sub = subtitleStore.subtitles.find((item) => item.id === id);
+    if (sub) {
+      const existingIdx = diffEntries.value.findIndex((d) => d.id === id);
+      const entry: DiffEntry = {
+        id,
+        originalText: orig,
+        correctedText: text,
+        startTime: sub.startTime,
+        endTime: sub.endTime,
+        accepted: true,
+      };
+      if (existingIdx >= 0) {
+        diffEntries.value[existingIdx] = entry;
+      } else {
+        diffEntries.value.push(entry);
+      }
+    }
+  }
+}
+
+function handleApplyAll() {
+  for (const entry of diffEntries.value) {
+    entry.accepted = true;
+    subtitleStore.updateSubtitleText(entry.id, entry.correctedText);
+  }
+  notifications.success(`已全部采纳 ${diffEntries.value.length} 条 AI 润色修改`);
+}
+
+function handleRevertAll() {
+  for (const entry of diffEntries.value) {
+    entry.accepted = false;
+    subtitleStore.updateSubtitleText(entry.id, entry.originalText);
+  }
+  notifications.info(`已全部还原 ${diffEntries.value.length} 条原文`);
+}
+
+function handleToggleEntry(id: string) {
+  const entry = diffEntries.value.find((d) => d.id === id);
+  if (!entry) return;
+  entry.accepted = !entry.accepted;
+  if (entry.accepted) {
+    subtitleStore.updateSubtitleText(entry.id, entry.correctedText);
+  } else {
+    subtitleStore.updateSubtitleText(entry.id, entry.originalText);
+  }
 }
 
 async function onAiCorrect() {
@@ -397,6 +535,14 @@ async function onAiCorrect() {
     emit('openSettings');
     return;
   }
+
+  // 记录润色前的原始文本快照
+  const snapMap = new Map<string, string>();
+  for (const item of subtitleStore.subtitles) {
+    snapMap.set(item.id, item.text);
+  }
+  originalTextMap.value = snapMap;
+  diffEntries.value = [];
 
   // 快照目标，避免在批量修改过程中读取到已变更的文本
   const targets = subtitleStore.subtitles
@@ -474,7 +620,7 @@ async function exportAs(format: ExportFormat) {
   const content = SubtitleExporter.exportToString(exportable, format);
   const baseName = subtitleStore.videoFileName
     ? subtitleStore.videoFileName.replace(/\.[^/.]+$/, '')
-    : 'sublens_subtitles';
+    : 'vidglyph_subtitles';
   const fileName = `${baseName}.${format}`;
 
   try {

@@ -12,6 +12,15 @@ export type {
   NativeVideoMetadata,
   SceneChange,
   SceneDetectionConfig,
+  NativePipelineRequest,
+  PipelineProgressPayload,
+  PipelineSubtitlePayload,
+  PipelineFinishedPayload,
+  NativeOcrStatus,
+  ProjectRecord,
+  SubtitleRecord,
+  BatchTaskRecord,
+  ProjectDetail,
 } from './tauriBridge'
 export { DEFAULT_SCENE_CONFIG } from './tauriBridge'
 

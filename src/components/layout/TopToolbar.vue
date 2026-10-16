@@ -1,24 +1,46 @@
 <template>
-  <header class="h-16 px-6 bg-slate-950 border-b border-slate-800 flex items-center justify-between shadow-xl">
-    <!-- Brand Logo & Name -->
+  <header class="h-16 px-5 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80 flex items-center justify-between shadow-2xl relative z-40 select-none">
+    <!-- Brand Logo, Name & Active Project Pill -->
     <div class="flex items-center gap-3">
-      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-emerald-950">
-        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
-          <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
-        </svg>
+      <!-- VidGlyph Optical Prism & Character Glyph Logo -->
+      <div class="relative w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 via-teal-400 to-indigo-500 p-0.5 shadow-lg shadow-emerald-950/80 group cursor-default">
+        <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+          <svg class="w-5 h-5 text-emerald-400 group-hover:scale-105 transition duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <!-- Optical lens hexagonal aperture with stylized V & G glyph lines -->
+            <polygon points="12 2 20 6.5 20 17.5 12 22 4 17.5 4 6.5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="stroke-emerald-400"/>
+            <path d="M8 9l4 6 4-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="stroke-teal-300"/>
+            <circle cx="12" cy="12" r="2" fill="currentColor" class="text-indigo-400"/>
+          </svg>
+        </div>
       </div>
+
       <div>
-        <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
-          SubLens
-          <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800/80">v0.0.1</span>
-          <span v-if="isTauri" class="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded bg-blue-950 text-blue-400 border border-blue-800/80">Tauri Native</span>
-        </h1>
-        <p class="text-[11px] text-slate-400">专业硬字幕提取与蒸馏工具</p>
+        <div class="flex items-center gap-2">
+          <h1 class="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
+            VidGlyph <span class="text-xs font-normal text-slate-400">· 字映</span>
+          </h1>
+          <span class="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 font-semibold">v0.1.0</span>
+          <span v-if="isTauri" class="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded-full bg-indigo-950/80 text-indigo-300 border border-indigo-800/60">Desktop</span>
+        </div>
+        <p class="text-[10px] text-slate-400">视频字幕光学解析与多轨精编工坊</p>
       </div>
+
+      <!-- Active Project Capsule Button -->
+      <button
+        class="hidden lg:flex items-center gap-1.5 ml-2 px-2.5 py-1 rounded-lg bg-slate-900/80 hover:bg-slate-800/90 border border-slate-800 hover:border-emerald-600/50 text-[11px] font-mono text-slate-300 hover:text-white transition cursor-pointer shadow-xs"
+        title="当前工作区工程，点击切换或管理工程"
+        @click="emit('openProjects')"
+      >
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span>
+        <span class="truncate max-w-[120px] font-medium">{{ projectStore.currentProjectName || '未命名工程' }}</span>
+        <svg class="w-3 h-3 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </button>
     </div>
 
     <!-- Center Main Action Buttons -->
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-2.5">
       <!-- 原生 DOM File Input 选择器 (100% 兼容 WebKit blob: 协议) -->
       <input
         ref="fileInputRef"
@@ -30,7 +52,8 @@
 
       <!-- 导入视频按键 -->
       <button
-        class="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-semibold rounded-lg border border-slate-700 shadow transition cursor-pointer"
+        class="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-100 text-xs font-semibold rounded-lg border border-slate-700/80 hover:border-slate-600 shadow-sm transition cursor-pointer"
+        title="导入本地视频文件 (快捷键: ⌘O / Ctrl+O)"
         @click="onImportClick"
       >
         <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -39,38 +62,73 @@
         <span>导入视频</span>
       </button>
 
+      <!-- 工程项目管理按键 -->
+      <button
+        class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700/80 hover:border-slate-600 shadow-sm transition cursor-pointer"
+        title="打开本地 SQLite 工程管理与 .vidglyph 工程包"
+        @click="emit('openProjects')"
+      >
+        <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+        </svg>
+        <span>工程管理</span>
+      </button>
+
+      <!-- 批量生产线按键 -->
+      <button
+        class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700/80 hover:border-slate-600 shadow-sm transition cursor-pointer"
+        title="打开多视频并发提取生产线看板"
+        @click="emit('openBatch')"
+      >
+        <svg class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+        </svg>
+        <span>批量流水线</span>
+      </button>
+
       <!-- 自动定位选区按键 -->
       <button
         v-if="subtitleStore.videoUrl"
         :disabled="isDetectingROI"
-        class="flex items-center gap-2 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-teal-300 text-xs font-semibold rounded-lg border border-slate-700 shadow transition cursor-pointer"
+        class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-teal-300 text-xs font-semibold rounded-lg border border-teal-800/60 hover:border-teal-600/80 shadow-sm transition cursor-pointer"
         title="智能分析视频硬字幕轮廓并自动推荐 ROI 选区"
         @click="onAutoDetectROI"
       >
-        <svg class="w-4 h-4 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg v-if="!isDetectingROI" class="w-4 h-4 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L5.6 15.12a2 2 0 00-1.023.547l-1.06 1.06a2 2 0 000 2.828l1.06 1.06a2 2 0 002.828 0l1.06-1.06a2 2 0 011.414-.586l.318-.016a6 6 0 013.86-.517l2.387.477a2 2 0 001.022.547l1.06-1.06a2 2 0 000-2.828l-1.06-1.06z"/>
         </svg>
-        <span>{{ isDetectingROI ? '正在分析...' : '自动定位选区' }}</span>
+        <svg v-else class="w-4 h-4 animate-spin text-teal-400" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+        <span>{{ isDetectingROI ? '定位中...' : '自动选区' }}</span>
       </button>
 
       <!-- 选择区域 (ROI 显隐开关联动) -->
       <button
         :class="[
-          'flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg border transition shadow cursor-pointer',
-          subtitleStore.isRoiActive ? 'bg-emerald-950 border-emerald-500 text-emerald-300' : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'
+          'flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition shadow-sm cursor-pointer',
+          subtitleStore.isRoiActive ? 'bg-emerald-950/80 border-emerald-500/80 text-emerald-300 ring-1 ring-emerald-500/30' : 'bg-slate-900 border-slate-700/80 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
         ]"
+        title="开启/关闭视频预览画面上的 8 点手柄硬字幕选区"
         @click="subtitleStore.isRoiActive = !subtitleStore.isRoiActive"
       >
         <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5v4h2V7h2V5H3zm0 10v4h4v-2H5v-2H3zm14 4h4v-4h-2v2h-2v2zm2-14h-4v2h2v2h2V5z"/>
         </svg>
-        <span>选择区域</span>
+        <span>标定选区</span>
       </button>
 
-      <!-- 开始提取字幕 -->
+      <!-- 开始提取字幕 (Hero CTA 渐变按键) -->
       <button
         :disabled="!subtitleStore.videoUrl"
-        class="flex items-center gap-2 px-5 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white text-xs font-bold rounded-lg shadow-lg shadow-emerald-950 transition cursor-pointer"
+        :class="[
+          'flex items-center gap-2 px-5 py-2 text-xs font-bold rounded-lg shadow-lg transition cursor-pointer',
+          subtitleStore.isExtracting
+            ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-950/60 ring-2 ring-rose-500/30'
+            : 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-400 text-white shadow-emerald-950/80 hover:shadow-emerald-900/60 disabled:opacity-40 disabled:pointer-events-none'
+        ]"
+        title="开始执行视频硬字幕流式提取 (快捷键: ⌘Enter / Ctrl+Enter)"
         @click="onExtractionClick"
       >
         <svg v-if="!subtitleStore.isExtracting" class="w-4 h-4 fill-current" viewBox="0 0 24 24">
@@ -80,16 +138,16 @@
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
         </svg>
-        {{ subtitleStore.isExtracting ? `停止提取 [${subtitleStore.progressPercent}%]` : '开始提取字幕' }}
+        <span>{{ subtitleStore.isExtracting ? `停止提取 [${subtitleStore.progressPercent}%]` : '开始提取' }}</span>
       </button>
     </div>
 
     <!-- Right Mode Switcher & Settings -->
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-2.5">
       <!-- 提取配置快捷控件（语言、采样间隔、时间范围指示） -->
-      <div class="flex items-center gap-2 bg-slate-900/90 border border-slate-800 rounded-lg px-2 py-1 text-xs">
+      <div class="flex items-center gap-1.5 bg-slate-900/90 border border-slate-800 rounded-lg px-2 py-1 text-xs">
         <!-- 识别语言快捷选择 -->
-        <label class="flex items-center gap-1.5 cursor-pointer" title="OCR 识别语言">
+        <label class="flex items-center gap-1 cursor-pointer" title="OCR 识别模型主语言">
           <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
           </svg>
@@ -109,10 +167,10 @@
           </select>
         </label>
 
-        <span class="text-slate-700">|</span>
+        <span class="text-slate-800">|</span>
 
         <!-- 采样间隔快捷选择 -->
-        <label class="flex items-center gap-1 cursor-pointer" title="抽帧采样间隔">
+        <label class="flex items-center gap-1 cursor-pointer" title="抽帧采样间隔频率">
           <span class="text-[11px] text-slate-400">间隔:</span>
           <select
             :value="extractionSettings.options.sampleInterval"
@@ -126,7 +184,7 @@
           </select>
         </label>
 
-        <!-- 自定义时间范围提示徽章（如仅截取局部片段时间） -->
+        <!-- 自定义时间范围提示徽章 -->
         <button
           v-if="hasTimeSpanConstraint"
           class="flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-950/70 border border-emerald-800/60 text-emerald-400 font-mono text-[10px] cursor-pointer hover:bg-emerald-900 transition"
@@ -139,34 +197,41 @@
       </div>
 
       <!-- 离线/云端 模式 Toggle -->
-      <div class="flex items-center p-1 bg-slate-900 border border-slate-800 rounded-lg text-xs">
+      <div class="flex items-center p-0.5 bg-slate-900/90 border border-slate-800 rounded-lg text-xs">
         <button
           :class="[
-            'px-3 py-1 rounded-md transition font-medium cursor-pointer',
-            subtitleStore.ocrMode === 'local' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
+            'px-2.5 py-1 rounded-md transition font-medium cursor-pointer',
+            subtitleStore.ocrMode === 'local' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'
           ]"
+          title="使用本地轻量 ONNX 流式识别引擎 (无需网络，极速无耗)"
           @click="subtitleStore.ocrMode = 'local'"
         >
-          离线模式
+          本地原生
         </button>
         <button
           :class="[
-            'px-3 py-1 rounded-md transition font-medium cursor-pointer',
-            subtitleStore.ocrMode === 'cloud' ? 'bg-emerald-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
+            'px-2.5 py-1 rounded-md transition font-medium cursor-pointer',
+            subtitleStore.ocrMode === 'cloud' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'
           ]"
+          title="使用云端视觉大模型 (Gemini / OpenAI Vision) 深度理解"
           @click="subtitleStore.ocrMode = 'cloud'"
         >
-          云端 API
+          云端大模型
         </button>
       </div>
 
-      <!-- 设置按钮 -->
+      <!-- 设置按钮 (含 API Key 配置指示小绿点) -->
       <button
-        class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition border border-slate-700 cursor-pointer"
-        title="配置与安全密钥设置"
+        class="relative p-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white transition border border-slate-800 cursor-pointer"
+        title="系统设置与 API 密钥管理"
         @click="$emit('openSettings')"
       >
-        <svg class="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24">
+        <span
+          v-if="securityStore.apiKey"
+          class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-slate-950"
+          title="已配置云端 API Key"
+        ></span>
+        <svg class="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
         </svg>
@@ -177,7 +242,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useExtractionSettingsStore, useSubtitleStore } from '../../stores';
+import { useExtractionSettingsStore, useSubtitleStore, useProjectStore, useSecurityStore } from '../../stores';
 import { TauriBridge } from '../../services';
 import { useWorkspaceVideoImport } from '../../composables/useWorkspaceVideoImport';
 import { SUPPORTED_LANGUAGES } from '../../core';
@@ -185,6 +250,8 @@ import { SUPPORTED_LANGUAGES } from '../../core';
 const props = defineProps<{ isDetectingRoi?: boolean }>();
 
 const subtitleStore = useSubtitleStore();
+const projectStore = useProjectStore();
+const securityStore = useSecurityStore();
 const extractionSettings = useExtractionSettingsStore();
 const supportedLanguages = SUPPORTED_LANGUAGES;
 
@@ -206,19 +273,25 @@ const timeSpanLabel = computed(() => {
 });
 
 function onLanguageChange(event: Event) {
-  const select = event.target as HTMLSelectElement;
-  extractionSettings.update({ language: select.value });
+  const target = event.target as { value?: string } | null;
+  if (target?.value !== undefined) {
+    extractionSettings.update({ language: target.value });
+  }
 }
 
 function onSampleIntervalChange(event: Event) {
-  const select = event.target as HTMLSelectElement;
-  extractionSettings.update({ sampleInterval: Number(select.value) });
+  const target = event.target as { value?: string } | null;
+  if (target?.value !== undefined) {
+    extractionSettings.update({ sampleInterval: Number(target.value) });
+  }
 }
 
 const emit = defineEmits<{
   (event: 'startExtraction'): void
   (event: 'cancelExtraction'): void
   (event: 'openSettings'): void
+  (event: 'openProjects'): void
+  (event: 'openBatch'): void
   (event: 'autoRoi'): void
 }>();
 

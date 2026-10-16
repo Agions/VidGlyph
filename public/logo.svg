@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="SubLens Logo">
-  <title>SubLens</title>
-  <desc>SubLens - 专业视频硬字幕提取与蒸馏工具 Logo</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="VidGlyph Logo">
+  <title>VidGlyph</title>
+  <desc>VidGlyph · 字映 - 专业视频字幕光学解析工坊 Logo</desc>
 
   <defs>
     <!-- 暗黑 Slate 主渐变 -->
@@ -53,19 +53,19 @@
     <rect x="-32" y="0" width="32" height="6" rx="3" fill="#ffffff" opacity="0.8"/>
   </g>
 
-  <!-- 底部 SubLens 品牌标志 -->
+  <!-- 底部 VidGlyph 品牌标志 -->
   <g transform="translate(256, 400)">
     <text x="0" y="0" text-anchor="middle"
           font-family="system-ui, -apple-system, 'Inter', sans-serif"
           font-size="52" font-weight="800" letter-spacing="-1.5"
           fill="#ffffff">
-      SubLens
+      VidGlyph
     </text>
     <text x="0" y="32" text-anchor="middle"
           font-family="system-ui, -apple-system, 'Inter', sans-serif"
           font-size="14" font-weight="600" letter-spacing="4"
           fill="#10b981" opacity="0.9">
-      SUBTITLE EXTRACTION ENGINE
+      SUBTITLE EXTRACTION STUDIO
     </text>
   </g>
 </svg>

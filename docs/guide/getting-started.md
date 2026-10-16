@@ -1,12 +1,12 @@
 # 快速开始
 
-欢迎使用 SubLens！本文档将帮助你快速搭建开发环境并运行项目。
+欢迎使用 VidGlyph！本文档将帮助你快速搭建开发环境并运行项目。
 
 ---
 
 ## 🖼️ 应用界面概览
 
-![SubLens 主工作台运行界面](/screenshots/app-studio-ui.jpg)
+![VidGlyph 主工作台运行界面](/screenshots/app-studio-ui.jpg)
 
 ---
 
@@ -26,8 +26,8 @@
 ### 1. 克隆仓库
 
 ```bash
-git clone https://github.com/Agions/SubLens.git
-cd SubLens
+git clone https://github.com/Agions/VidGlyph.git
+cd VidGlyph
 ```
 
 ### 2. 安装前端依赖
@@ -64,7 +64,7 @@ pnpm test
 ## 目录结构
 
 ```
-SubLens/
+VidGlyph/
 ├── src/                        # 前端源码
 │   ├── core/                   # 核心业务逻辑 (Pipeline, ROI, AICorrector)
 │   ├── services/               # OCR 引擎架构 (Local & Cloud, TauriBridge, UpdaterService)

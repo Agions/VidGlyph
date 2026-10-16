@@ -1,6 +1,6 @@
 /**
  * @file IOCREngine.ts
- * @description SubLens 系统的核心 OCR 服务抽象接口与数据结构定义。
+ * @description VidGlyph 系统的核心 OCR 服务抽象接口与数据结构定义。
  * 遵循 依赖倒置原则 (DIP)，解耦核心引擎与具体的离线/云端 OCR 实现。
  */
 

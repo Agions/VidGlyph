@@ -1,5 +1,5 @@
 /**
- * Subtitle Types — SubLens
+ * Subtitle Types — VidGlyph
  * ==========================
  * 核心数据类型定义。
  * 格式化逻辑已迁移至 src/core/Exporter.ts。

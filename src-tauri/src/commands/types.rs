@@ -1,4 +1,4 @@
-//! Shared types for the SubLens commands layer.
+//! Shared types for the VidGlyph commands layer.
 //!
 //! All cross-cutting data structures live here to avoid duplication.
 

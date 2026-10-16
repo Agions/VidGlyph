@@ -7,7 +7,7 @@ function makeItem(overrides: Partial<OCRItem> = {}): OCRItem {
     id: 'item-1',
     startTime: 1000,
     endTime: 3000,
-    text: 'Hello SubLens',
+    text: 'Hello VidGlyph',
     confidence: 92,
     ...overrides,
   }
@@ -22,7 +22,7 @@ describe('SubtitleExporter 适配器', () => {
       index: 1,
       startTime: 1,
       endTime: 3,
-      text: 'Hello SubLens',
+      text: 'Hello VidGlyph',
     })
     expect(item.confidence).toBeCloseTo(0.92, 4)
   })
@@ -36,7 +36,7 @@ describe('SubtitleExporter 适配器', () => {
     const srt = SubtitleExporter.exportToString([makeItem()], 'srt')
 
     expect(srt).toContain('1\n00:00:01,000 --> 00:00:03,000')
-    expect(srt).toContain('Hello SubLens')
+    expect(srt).toContain('Hello VidGlyph')
   })
 
   it('导出 VTT 带 WEBVTT 头，时间轴使用点号毫秒', () => {
@@ -52,7 +52,7 @@ describe('SubtitleExporter 适配器', () => {
       'txt',
     )
 
-    expect(txt).toBe('Hello SubLens\nVideo Subtitle Extraction')
+    expect(txt).toBe('Hello VidGlyph\nVideo Subtitle Extraction')
   })
 
   it('支持单前端时代不具备的专业格式（统一由领域导出引擎提供）', () => {
@@ -61,7 +61,7 @@ describe('SubtitleExporter 适配器', () => {
 
     expect(ass).toContain('[Script Info]')
     expect(ass).toContain('Dialogue:')
-    expect(lrc).toContain('[00:01.00]Hello SubLens')
+    expect(lrc).toContain('[00:01.00]Hello VidGlyph')
   })
 
   it('为每种格式给出正确的 MIME 类型', () => {

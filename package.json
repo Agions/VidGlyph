@@ -1,7 +1,7 @@
 {
-  "name": "sublens",
-  "version": "0.0.1",
-  "description": "SubLens - 专业硬编码字幕提取工具，从视频画面中蒸馏提炼字幕文本。基于 Tauri + Vue 3 + TypeScript 构建。",
+  "name": "vidglyph",
+  "version": "0.1.0",
+  "description": "VidGlyph · 字映 - 专业视频硬编码字幕光学提取与精编工坊。基于 Tauri 2 + Rust + Vue 3 + TypeScript 构建。",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -39,31 +39,35 @@
     ]
   },
   "keywords": [
-    "video",
-    "subtitle",
-    "ocr",
-    "extraction",
+    "vidglyph",
+    "video-ocr",
     "hardcoded-subtitles",
+    "subtitle-extractor",
+    "subtitle-editor",
+    "audio-waveform",
+    "tauri-2",
+    "rust",
+    "vue-3",
+    "onnx-runtime",
+    "pp-ocrv4",
+    "ai-proofreading",
+    "sqlite-wal",
+    "desktop-app",
+    "local-first",
+    "video-to-text",
     "srt",
     "vtt",
-    "ass",
-    "tauri",
-    "vue",
-    "tesseract",
-    "paddleocr",
-    "easyocr",
-    "subtitle-extraction",
-    "video-to-text",
-    "caption-extraction"
+    "ass"
   ],
   "author": "Agions",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Agions/SubLens"
+    "url": "https://github.com/Agions/VidGlyph.git"
   },
+  "homepage": "https://github.com/Agions/VidGlyph#readme",
   "bugs": {
-    "url": "https://github.com/Agions/SubLens/issues"
+    "url": "https://github.com/Agions/VidGlyph/issues"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",

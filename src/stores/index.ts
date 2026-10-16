@@ -9,3 +9,4 @@
 export { useSubtitleStore } from './subtitleStore'
 export { useSecurityStore } from './securityStore'
 export { useExtractionSettingsStore } from './extractionSettings'
+export { useProjectStore } from './projectStore'

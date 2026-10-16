@@ -1,4 +1,4 @@
-//! GPU capability detection for SubLens.
+//! GPU capability detection for VidGlyph.
 //!
 //! Uses ONNX Runtime's provider enumeration to detect CUDA/TensorRT
 //! availability — no Python dependency needed.

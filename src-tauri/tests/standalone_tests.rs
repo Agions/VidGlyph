@@ -1,4 +1,4 @@
-//! Standalone tests for SubLens's new Rust-native modules.
+//! Standalone tests for VidGlyph's new Rust-native modules.
 //!
 //! Compile and run: `rustc tests/standalone_tests.rs -o /tmp/test_bin && /tmp/test_bin`
 //!

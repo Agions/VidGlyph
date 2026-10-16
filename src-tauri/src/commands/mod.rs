@@ -1,4 +1,4 @@
-//! SubLens - Rust Tauri 后端命令层
+//! VidGlyph - Rust Tauri 后端命令层
 //!
 //! ## 模块结构
 //!
@@ -25,9 +25,12 @@ pub mod export_fmt;
 pub mod ffmpeg;
 pub mod file;
 pub mod gpu;
+pub mod keyring;
 pub mod ocr_engine;
 pub mod ocr_export;
+pub mod pipeline;
 pub mod scene;
+pub mod storage;
 pub mod system;
 pub mod timestamp;
 pub mod types;

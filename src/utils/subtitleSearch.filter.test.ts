@@ -4,7 +4,7 @@ import { filterSubtitleItems, normalizeConfidence } from './subtitleSearch'
 const items = [
   { id: '1', text: '今天天气真好', confidence: 95 },
   { id: '2', text: '明天天气不错', confidence: 40 },
-  { id: '3', text: 'Hello SubLens World', confidence: 88 },
+  { id: '3', text: 'Hello VidGlyph World', confidence: 88 },
 ]
 
 describe('filterSubtitleItems', () => {
@@ -13,8 +13,8 @@ describe('filterSubtitleItems', () => {
   })
 
   it('关键词大小写不敏感', () => {
-    expect(filterSubtitleItems(items, { keyword: 'sublens' }).map((i) => i.id)).toEqual(['3'])
-    expect(filterSubtitleItems(items, { keyword: 'SUBLENS' }).map((i) => i.id)).toEqual(['3'])
+    expect(filterSubtitleItems(items, { keyword: 'vidglyph' }).map((i) => i.id)).toEqual(['3'])
+    expect(filterSubtitleItems(items, { keyword: 'VIDGLYPH' }).map((i) => i.id)).toEqual(['3'])
   })
 
   it('空格分隔的多关键词按 AND 匹配', () => {

@@ -140,3 +140,17 @@ export function formatETA(seconds: number | null): string {
   if (seconds < 3600) return `约 ${Math.ceil(seconds / 60)}m`
   return `约 ${Math.floor(seconds / 3600)}h ${Math.ceil((seconds % 3600) / 60)}m`
 }
+
+/**
+ * Format milliseconds to standard timecode string (HH:MM:SS.mmm)
+ */
+export function formatTimecode(ms: number): string {
+  if (isNaN(ms) || ms < 0) ms = 0
+  const totalSeconds = Math.floor(ms / MS_PER_SECOND)
+  const remainderMs = Math.floor(ms % MS_PER_SECOND)
+  const hours = Math.floor(totalSeconds / HOURS_IN_SECONDS)
+  const minutes = Math.floor((totalSeconds % HOURS_IN_SECONDS) / MINUTES_IN_SECONDS)
+  const seconds = totalSeconds % MINUTES_IN_SECONDS
+  return `${_pad2(hours)}:${_pad2(minutes)}:${_pad2(seconds)}.${remainderMs.toString().padStart(3, '0')}`
+}
+

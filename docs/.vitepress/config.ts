@@ -1,10 +1,10 @@
 import { defineConfig } from 'vitepress'
 
 export default defineConfig({
-  title: 'SubLens',
+  title: 'VidGlyph',
   description: '专业视频硬字幕提取与蒸馏工具 — 从视频画面中蒸馏提炼字幕文本',
   lang: 'zh-CN',
-  base: process.env.GITHUB_ACTIONS ? '/SubLens/' : '/',
+  base: process.env.GITHUB_ACTIONS ? '/VidGlyph/' : '/',
   cleanUrls: true,
 
   themeConfig: {
@@ -55,7 +55,7 @@ export default defineConfig({
     },
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/Agions/SubLens' },
+      { icon: 'github', link: 'https://github.com/Agions/VidGlyph' },
     ],
 
     footer: {
@@ -64,7 +64,7 @@ export default defineConfig({
     },
 
     editLink: {
-      pattern: 'https://github.com/Agions/SubLens/edit/main/docs/:path',
+      pattern: 'https://github.com/Agions/VidGlyph/edit/main/docs/:path',
       text: 'Edit this page on GitHub',
     },
   },

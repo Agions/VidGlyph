@@ -27,6 +27,8 @@ export interface ExtractionStatePort {
   getConfig(): OCRConfig
   /** 可选：读取用户配置的提取参数（未实现时使用默认值） */
   getExtractionOptions?(): Partial<ExtractionOptions>
+  /** 可选：读取当前视频本地文件系统路径（桌面端原生管道使用） */
+  getVideoPath?(): string | null
   setExtracting(extracting: boolean): void
   setProgress(percent: number): void
   addSubtitles(items: OCRItem[]): void

@@ -2,12 +2,12 @@
 layout: home
 
 hero:
-  name: SubLens
+  name: VidGlyph
   text: 专业视频硬字幕提取与蒸馏工具
   tagline: 从视频画面中蒸馏提炼字幕文本，支持离线与云端双模式。基于 Tauri + Vue 3 + TypeScript 构建。
   image:
     src: /logo.svg
-    alt: SubLens
+    alt: VidGlyph
   actions:
     - theme: brand
       text: 快速开始
@@ -17,7 +17,7 @@ hero:
       link: /architecture
     - theme: alt
       text: GitHub
-      link: https://github.com/Agions/SubLens
+      link: https://github.com/Agions/VidGlyph
 
 features:
   - icon: ⚡

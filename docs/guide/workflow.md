@@ -1,19 +1,19 @@
 # 使用流程
 
-SubLens 采用「导入 → 选区 → 识别 → 导出」的四步极简工作流，极大地降低用户操作门槛。
+VidGlyph 采用「导入 → 选区 → 识别 → 导出」的四步极简工作流，极大地降低用户操作门槛。
 
 ---
 
 ## 🖼️ 应用运行界面截图
 
 ### 1. 主工作台界面
-![SubLens 主工作台界面](/screenshots/app-studio-ui.jpg)
+![VidGlyph 主工作台界面](/screenshots/app-studio-ui.jpg)
 
 ### 2. 8 点手柄选区与硬字幕抽取
-![SubLens 8点手柄框选选区](/screenshots/roi-selection.png)
+![VidGlyph 8点手柄框选选区](/screenshots/roi-selection.png)
 
 ### 3. 全局配置与凭据管理
-![SubLens 设置与密钥管理](/screenshots/settings-modal.jpg)
+![VidGlyph 设置与密钥管理](/screenshots/settings-modal.jpg)
 
 ---
 

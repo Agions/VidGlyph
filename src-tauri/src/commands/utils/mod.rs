@@ -1,4 +1,4 @@
-//! Shared utilities for the SubLens commands layer.
+//! Shared utilities for the VidGlyph commands layer.
 //!
 //! ## Contents
 //!
