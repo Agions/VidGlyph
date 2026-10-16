@@ -151,10 +151,12 @@ jobs:
       # 格式化与静态检查：与本地 `pnpm lint:rust` 等价
       - name: Check formatting
         run: |
+          rustup component add rustfmt
           cd src-tauri
           cargo fmt --check
 
       - name: Run Clippy
         run: |
+          rustup component add clippy
           cd src-tauri
           cargo clippy --all-targets -- -D warnings
