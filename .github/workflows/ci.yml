@@ -141,9 +141,6 @@ jobs:
         with:
           workspaces: src-tauri
 
-      - name: Generate Cargo.lock
-        run: cd src-tauri && cargo generate-lockfile
-
       - name: Run unit tests
         run: |
           cd src-tauri
