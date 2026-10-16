@@ -54,7 +54,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: ubuntu-22.04
+          - platform: ubuntu-24.04
             args: ''
             label: ubuntu-x64
           - platform: windows-latest
@@ -96,7 +96,7 @@ jobs:
           workspaces: src-tauri
 
       - name: Install Linux build deps
-        if: matrix.platform == 'ubuntu-22.04'
+        if: startsWith(matrix.platform, 'ubuntu')
         run: |
           sudo apt-get update
           sudo apt-get install -y \
