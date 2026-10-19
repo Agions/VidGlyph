@@ -238,7 +238,7 @@ fn compute_frame_diff(a: &RgbImage, b: &RgbImage) -> f64 {
     (sum_diff as f64) / (sampled_count as f64 * 3.0)
 }
 
-/// Calculate basic similarity ratio between two subtitle strings.
+/// Calculate normalized Levenshtein edit distance similarity ratio between two subtitle strings.
 fn text_similarity(s1: &str, s2: &str) -> f64 {
     let t1 = s1.trim();
     let t2 = s2.trim();
@@ -249,18 +249,42 @@ fn text_similarity(s1: &str, s2: &str) -> f64 {
         return 0.0;
     }
 
-    let chars1: Vec<char> = t1.chars().collect();
-    let chars2: Vec<char> = t2.chars().collect();
-
-    let mut common = 0;
-    for c in &chars1 {
-        if chars2.contains(c) {
-            common += 1;
+    // Direct substring inclusion optimization (handles partial recognition / progressive subtitles)
+    if t1.contains(t2) || t2.contains(t1) {
+        let shorter = t1.chars().count().min(t2.chars().count()) as f64;
+        let longer = t1.chars().count().max(t2.chars().count()) as f64;
+        if shorter / longer >= 0.65 {
+            return (shorter / longer).max(0.85);
         }
     }
 
-    let max_len = chars1.len().max(chars2.len()) as f64;
-    (common as f64) / max_len
+    let chars1: Vec<char> = t1.chars().collect();
+    let chars2: Vec<char> = t2.chars().collect();
+    let len1 = chars1.len();
+    let len2 = chars2.len();
+
+    // Two-row dynamic programming for space-efficient Levenshtein distance
+    let mut prev_row: Vec<usize> = (0..=len2).collect();
+    let mut curr_row: Vec<usize> = vec![0; len2 + 1];
+
+    for (i, &c1) in chars1.iter().enumerate() {
+        curr_row[0] = i + 1;
+        for (j, &c2) in chars2.iter().enumerate() {
+            let cost = if c1 == c2 { 0 } else { 1 };
+            curr_row[j + 1] = (prev_row[j + 1] + 1)
+                .min(curr_row[j] + 1)
+                .min(prev_row[j] + cost);
+        }
+        prev_row.copy_from_slice(&curr_row);
+    }
+
+    let distance = prev_row[len2];
+    let max_len = len1.max(len2);
+    if max_len == 0 {
+        1.0
+    } else {
+        1.0 - (distance as f64 / max_len as f64)
+    }
 }
 
 struct PendingSubtitle {

@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { isCJKText, hasCJKChars, normalizeCJKPunct, langToScript, FULLWIDTH_PUNCT_MAP } from './text'
+import {
+  isCJKText,
+  hasCJKChars,
+  normalizeCJKPunct,
+  langToScript,
+  FULLWIDTH_PUNCT_MAP,
+  calculateLevenshteinSimilarity,
+  areSubtitlesMergeable,
+} from './text'
 
 describe('isCJKText', () => {
   it('returns false for empty string', () => {
@@ -203,3 +211,45 @@ describe('FULLWIDTH_PUNCT_MAP', () => {
     expect(FULLWIDTH_PUNCT_MAP['。']).toBe('.')
   })
 })
+
+describe('calculateLevenshteinSimilarity', () => {
+  it('returns 1.0 for identical strings', () => {
+    expect(calculateLevenshteinSimilarity('今天天气很好', '今天天气很好')).toBe(1.0)
+    expect(calculateLevenshteinSimilarity('Hello world', 'Hello world')).toBe(1.0)
+  })
+
+  it('returns 0.0 when one string is empty', () => {
+    expect(calculateLevenshteinSimilarity('', 'abc')).toBe(0.0)
+    expect(calculateLevenshteinSimilarity('def', '')).toBe(0.0)
+  })
+
+  it('handles partial substring inclusion with high similarity', () => {
+    // 逐字/包含字幕
+    const sim = calculateLevenshteinSimilarity('欢迎来到这个世界', '欢迎来到这个世界！')
+    expect(sim).toBeGreaterThanOrEqual(0.85)
+  })
+
+  it('returns higher similarity for minor typos', () => {
+    const sim = calculateLevenshteinSimilarity('人工智能改变生活', '人工知能改变生活')
+    expect(sim).toBeGreaterThanOrEqual(0.8)
+  })
+})
+
+describe('areSubtitlesMergeable', () => {
+  it('returns true for same text within gap', () => {
+    expect(areSubtitlesMergeable('你好世界', '你好世界', 1000, 1500, 2000)).toBe(true)
+  })
+
+  it('returns false when time gap exceeds threshold', () => {
+    expect(areSubtitlesMergeable('你好世界', '你好世界', 1000, 4000, 2000)).toBe(false)
+  })
+
+  it('returns false for completely different text', () => {
+    expect(areSubtitlesMergeable('第一句话在这里', '完全不同的一段话', 1000, 1500, 2000)).toBe(false)
+  })
+
+  it('returns false for reverse timestamps', () => {
+    expect(areSubtitlesMergeable('你好', '你好', 5000, 2000, 2000)).toBe(false)
+  })
+})
+

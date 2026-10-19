@@ -6,6 +6,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { OCRItem, NormalizedROI } from '../services';
+import { areSubtitlesMergeable } from '../utils/text';
 
 export const useSubtitleStore = defineStore('subtitle', () => {
   // 当前模式: 'local' (离线硬字幕) | 'cloud' (API Key)
@@ -42,18 +43,25 @@ export const useSubtitleStore = defineStore('subtitle', () => {
   // 选中的字幕 ID
   const selectedSubtitleId = ref<string | null>(null);
 
-  /** 添加新的字幕条目并自动去重/融合 */
+  /** 添加新的字幕条目并自动去重/融合（支持模糊相似度与时序融合） */
   function addSubtitles(items: OCRItem[]) {
     for (const item of items) {
       if (!item.text || item.text.trim().length === 0) continue;
       
-      // 去重：如果上一条文本相同，扩展结束时间
       const last = subtitles.value[subtitles.value.length - 1];
-      if (last && last.text.trim() === item.text.trim() && Math.abs(item.startTime - last.endTime) < 2000) {
-        last.endTime = item.endTime;
+      if (last && areSubtitlesMergeable(last.text, item.text, last.endTime, item.startTime, 2000, 0.70)) {
+        // 自动顺延字幕时间跨度并加权/合并置信度
+        last.endTime = Math.max(last.endTime, item.endTime);
         last.confidence = Math.max(last.confidence, item.confidence);
+        // 如果新文本更完整且相似度高，采纳较长文本
+        if (item.text.trim().length > last.text.trim().length) {
+          last.text = item.text.trim();
+        }
       } else {
-        subtitles.value.push(item);
+        subtitles.value.push({
+          ...item,
+          text: item.text.trim(),
+        });
       }
     }
   }

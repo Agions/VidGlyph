@@ -50,6 +50,15 @@ function onTimelineClick(event: MouseEvent) {
 function onSelectSubtitle(startTimeMs: number) {
   subtitleStore.currentTime = Number((startTimeMs / 1000).toFixed(2))
 }
+
+function onTimelineWheel(event: WheelEvent) {
+  if (duration.value <= 0) return
+  event.preventDefault()
+  // 鼠标滚轮微调当前播放时间（每次微调 0.5s ~ 1s）
+  const delta = event.deltaY > 0 ? 0.5 : -0.5
+  const nextTime = Math.min(duration.value, Math.max(0, subtitleStore.currentTime + delta))
+  subtitleStore.currentTime = Number(nextTime.toFixed(2))
+}
 </script>
 
 <template>
@@ -77,6 +86,7 @@ function onSelectSubtitle(startTimeMs: number) {
       ref="timelineRef"
       class="timeline-track relative h-16 bg-slate-950 border border-slate-800/90 rounded-lg overflow-hidden cursor-pointer shadow-inner"
       @click="onTimelineClick"
+      @wheel.prevent="onTimelineWheel"
     >
       <!-- 刻度标尺线 (Tick Marks) -->
       <div class="absolute inset-x-0 top-0 h-2 flex justify-between px-2 pointer-events-none opacity-30 z-0">

@@ -63,3 +63,83 @@ export function langToScript(lang: string): Script {
   if (['en', 'eng', 'latin'].includes(lang)) return 'latin'
   return 'other'
 }
+
+/**
+ * 计算两段文本之间的归一化 Levenshtein 相似度 (0.0 ~ 1.0)。
+ * 融合子串包含判断，以有效应对逐字推进字幕与 OCR 边缘抖动。
+ */
+export function calculateLevenshteinSimilarity(s1: string, s2: string): number {
+  const t1 = s1.trim()
+  const t2 = s2.trim()
+  if (t1 === t2) return 1.0
+  if (!t1.length || !t2.length) return 0.0
+
+  // 子串包含启发式加权（处理逐字显示与前缀/后缀包含）
+  if (t1.includes(t2) || t2.includes(t1)) {
+    const shorter = Math.min(t1.length, t2.length)
+    const longer = Math.max(t1.length, t2.length)
+    if (shorter / longer >= 0.65) {
+      return Math.max(shorter / longer, 0.85)
+    }
+  }
+
+  const chars1 = Array.from(t1)
+  const chars2 = Array.from(t2)
+  const len1 = chars1.length
+  const len2 = chars2.length
+
+  let prevRow = new Array(len2 + 1)
+  let currRow = new Array(len2 + 1)
+
+  for (let j = 0; j <= len2; j++) {
+    prevRow[j] = j
+  }
+
+  for (let i = 0; i < len1; i++) {
+    currRow[0] = i + 1
+    const c1 = chars1[i]
+    for (let j = 0; j < len2; j++) {
+      const cost = c1 === chars2[j] ? 0 : 1
+      currRow[j + 1] = Math.min(
+        prevRow[j + 1] + 1,
+        currRow[j] + 1,
+        prevRow[j] + cost
+      )
+    }
+    const temp = prevRow
+    prevRow = currRow
+    currRow = temp
+  }
+
+  const distance = prevRow[len2]
+  const maxLen = Math.max(len1, len2)
+  return maxLen === 0 ? 1.0 : 1.0 - distance / maxLen
+}
+
+/**
+ * 判断两个字幕条目在时序和内容上是否可融合。
+ * @param existing 前一个字幕
+ * @param incoming 后一个字幕
+ * @param maxGapMs 允许的最大时间间隙（毫秒），默认 1500ms
+ * @param minSimilarity 文本相似度阈值，默认 0.75
+ */
+export function areSubtitlesMergeable(
+  existingText: string,
+  incomingText: string,
+  existingEnd: number,
+  incomingStart: number,
+  maxGapMs = 1500,
+  minSimilarity = 0.75
+): boolean {
+  if (incomingStart < existingEnd - 1000) {
+    // 逆序时间戳不融合
+    return false
+  }
+  const gap = Math.max(0, incomingStart - existingEnd)
+  if (gap > maxGapMs) {
+    return false
+  }
+
+  const sim = calculateLevenshteinSimilarity(existingText, incomingText)
+  return sim >= minSimilarity
+}

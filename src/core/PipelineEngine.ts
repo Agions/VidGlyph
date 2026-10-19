@@ -123,6 +123,8 @@ export class PipelineEngine implements ExtractionUseCase {
     if (wasPlaying) videoElement.pause()
     const originalTime = videoElement.currentTime
 
+    let canvas: HTMLCanvasElement | null = null
+
     try {
       const ocrEngine = await this.ocrResolver.getEngine({
         ...config,
@@ -130,7 +132,7 @@ export class PipelineEngine implements ExtractionUseCase {
         preprocessDenoise: effective.preprocessDenoise,
       })
 
-      const canvas = document.createElement('canvas')
+      canvas = document.createElement('canvas')
       canvas.width = videoElement.videoWidth || 1280
       canvas.height = videoElement.videoHeight || 720
       const ctx = canvas.getContext('2d') as CanvasRenderingContext2D | null
@@ -182,6 +184,11 @@ export class PipelineEngine implements ExtractionUseCase {
       logger.error('Pipeline', '识别过程出错', err)
       throw err
     } finally {
+      if (canvas) {
+        // 显式重置画布尺寸以释放底层显存/位图缓冲区
+        canvas.width = 0
+        canvas.height = 0
+      }
       videoElement.currentTime = originalTime
       if (wasPlaying) {
         videoElement.play().catch(() => {
