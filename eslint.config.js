@@ -33,6 +33,7 @@ const browserGlobals = {
   // DOM types
   MouseEvent: 'readonly',
   KeyboardEvent: 'readonly',
+  WheelEvent: 'readonly',
   HTMLElement: 'readonly',
   HTMLVideoElement: 'readonly',
   HTMLInputElement: 'readonly',
