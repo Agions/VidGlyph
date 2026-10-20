@@ -376,89 +376,161 @@ pub async fn start_native_pipeline(
                 .take()
                 .ok_or_else(|| "Failed to capture ffmpeg stdout".to_string())?;
 
-            let mut prev_frame: Option<RgbImage> = None;
-            let mut pending_sub: Option<PendingSubtitle> = None;
-            let mut frame_index = 0usize;
+            // ─── Stage 1: Async Frame Ingestion -> Channel ───────────────────
+            struct RawFrame {
+                index: usize,
+                time: f64,
+                img: RgbImage,
+            }
 
-            while let Some((w, h, data)) = read_ppm_frame(&mut stdout)
-                .await
-                .map_err(|e| format!("Error reading video frame stream: {e}"))?
-            {
+            struct OcrProcessedFrame {
+                index: usize,
+                time: f64,
+                should_run_ocr: bool,
+                text: Option<String>,
+                confidence: f64,
+            }
+
+            let (frame_tx, mut frame_rx) = tokio::sync::mpsc::channel::<RawFrame>(16);
+            let (result_tx, mut result_rx) = tokio::sync::mpsc::channel::<OcrProcessedFrame>(16);
+
+            let cancel_flag_read = cancel_flag.clone();
+            let reader_handle = tokio::spawn(async move {
+                let mut frame_index = 0usize;
+                while let Ok(Some((w, h, data))) = read_ppm_frame(&mut stdout).await {
+                    if cancel_flag_read.load(Ordering::Relaxed) {
+                        break;
+                    }
+                    let current_time = (range_start + (frame_index as f64) * interval).min(range_end);
+                    let index = frame_index;
+                    frame_index += 1;
+
+                    if let Some(img) = RgbImage::from_raw(w, h, data) {
+                        if frame_tx.send(RawFrame { index, time: current_time, img }).await.is_err() {
+                            break;
+                        }
+                    }
+                }
+            });
+
+            // ─── Stage 2: Worker Pool (Parallel Differential Precheck & Pooled OCR) ─
+            let lang_clone = lang.clone();
+            let cancel_flag_worker = cancel_flag.clone();
+            let worker_handle = tokio::spawn(async move {
+                let mut prev_frame: Option<RgbImage> = None;
+
+                while let Some(raw_frame) = frame_rx.recv().await {
+                    if cancel_flag_worker.load(Ordering::Relaxed) {
+                        break;
+                    }
+
+                    let mut should_run_ocr = true;
+                    if enable_scene_skip {
+                        if let Some(ref prev) = prev_frame {
+                            let diff = compute_frame_diff(prev, &raw_frame.img);
+                            if diff < 2.5 {
+                                should_run_ocr = false;
+                            }
+                        }
+                    }
+                    prev_frame = Some(raw_frame.img.clone());
+
+                    if !should_run_ocr {
+                        let _ = result_tx.send(OcrProcessedFrame {
+                            index: raw_frame.index,
+                            time: raw_frame.time,
+                            should_run_ocr: false,
+                            text: None,
+                            confidence: 0.0,
+                        }).await;
+                    } else {
+                        let lang = lang_clone.clone();
+                        let dyn_img = DynamicImage::ImageRgb8(raw_frame.img);
+
+                        // Run pooled OCR inference
+                        let ocr_res = tokio::task::spawn_blocking(move || {
+                            OcrEngine::recognize_pooled(&dyn_img, &lang)
+                        }).await;
+
+                        let ocr_items = match ocr_res {
+                            Ok(Ok(items)) => items,
+                            _ => vec![],
+                        };
+
+                        let kept: Vec<_> = ocr_items
+                            .into_iter()
+                            .filter(|item| (item.confidence as f64 * 100.0) >= min_conf || (item.confidence as f64) >= min_conf)
+                            .collect();
+
+                        if !kept.is_empty() {
+                            let text = kept
+                                .iter()
+                                .map(|i| i.text.trim())
+                                .collect::<Vec<_>>()
+                                .join(" ");
+                            let avg_conf = (kept.iter().map(|i| i.confidence as f64).sum::<f64>()
+                                / kept.len() as f64)
+                                .max(min_conf);
+
+                            let _ = result_tx.send(OcrProcessedFrame {
+                                index: raw_frame.index,
+                                time: raw_frame.time,
+                                should_run_ocr: true,
+                                text: Some(text),
+                                confidence: avg_conf,
+                            }).await;
+                        } else {
+                            let _ = result_tx.send(OcrProcessedFrame {
+                                index: raw_frame.index,
+                                time: raw_frame.time,
+                                should_run_ocr: true,
+                                text: None,
+                                confidence: 0.0,
+                            }).await;
+                        }
+                    }
+                }
+            });
+
+            // ─── Stage 3: Ordered Combiner, Temporal Fusion & Real-time Emitter ──
+            let mut pending_sub: Option<PendingSubtitle> = None;
+            let mut reorder_buffer: std::collections::BTreeMap<usize, OcrProcessedFrame> = std::collections::BTreeMap::new();
+            let mut next_expected_index = 0usize;
+
+            while let Some(processed) = result_rx.recv().await {
                 if cancel_flag.load(Ordering::Relaxed) {
                     let _ = child.kill().await;
-                    return Ok(());
+                    break;
                 }
 
-                let current_time = (range_start + (frame_index as f64) * interval).min(range_end);
-                frame_index += 1;
+                reorder_buffer.insert(processed.index, processed);
 
-                let rgb_img = match RgbImage::from_raw(w, h, data) {
-                    Some(img) => img,
-                    None => {
+                while let Some(frame) = reorder_buffer.remove(&next_expected_index) {
+                    next_expected_index += 1;
+                    let current_time = frame.time;
+
+                    if !frame.should_run_ocr {
                         frames_skipped += 1;
-                        continue;
-                    }
-                };
-
-                // Check static frame difference to skip OCR when background hasn't changed
-                let mut should_run_ocr = true;
-                if enable_scene_skip {
-                    if let Some(ref prev) = prev_frame {
-                        let diff = compute_frame_diff(prev, &rgb_img);
-                        // Very low difference means static scene
-                        if diff < 2.5 {
-                            should_run_ocr = false;
+                        if let Some(ref mut sub) = pending_sub {
+                            sub.end_time = (current_time + interval).min(range_end);
                         }
-                    }
-                }
-
-                if !should_run_ocr {
-                    frames_skipped += 1;
-                    if let Some(ref mut sub) = pending_sub {
-                        sub.end_time = (current_time + interval).min(range_end);
-                    }
-                } else {
-                    let dyn_img = DynamicImage::ImageRgb8(rgb_img.clone());
-                    let ocr_items = match OcrEngine::recognize(&dyn_img, &lang) {
-                        Ok(items) => items,
-                        Err(e) => {
-                            tracing::warn!("OCR inference frame error: {e}");
-                            vec![]
-                        }
-                    };
-
-                    let kept: Vec<_> = ocr_items
-                        .into_iter()
-                        .filter(|item| (item.confidence as f64 * 100.0) >= min_conf || (item.confidence as f64) >= min_conf)
-                        .collect();
-
-                    if !kept.is_empty() {
+                    } else if let Some(text) = frame.text {
                         frames_processed += 1;
-                        let text = kept
-                            .iter()
-                            .map(|i| i.text.trim())
-                            .collect::<Vec<_>>()
-                            .join(" ");
-                        let avg_conf = (kept.iter().map(|i| i.confidence as f64).sum::<f64>()
-                            / kept.len() as f64)
-                            .max(min_conf);
+                        let avg_conf = frame.confidence;
 
                         if let Some(mut existing) = pending_sub.take() {
                             let sim = text_similarity(&existing.text, &text);
                             if sim >= 0.70 {
-                                // Extend current subtitle
                                 existing.end_time = (current_time + interval).min(range_end);
                                 existing.confidence = (existing.confidence * existing.occurrences as f64
                                     + avg_conf)
                                     / (existing.occurrences + 1) as f64;
                                 existing.occurrences += 1;
-                                // Prefer longer text if similarity is high
                                 if text.chars().count() > existing.text.chars().count() {
                                     existing.text = text;
                                 }
                                 pending_sub = Some(existing);
                             } else {
-                                // Flush previous subtitle and emit event
                                 subtitles_count += 1;
                                 let item = SubtitleItem {
                                     index: subtitles_count,
@@ -479,7 +551,6 @@ pub async fn start_native_pipeline(
                                     },
                                 );
 
-                                // Start new subtitle
                                 pending_sub = Some(PendingSubtitle {
                                     id: uuid_v4(),
                                     start_time: current_time,
@@ -490,7 +561,6 @@ pub async fn start_native_pipeline(
                                 });
                             }
                         } else {
-                            // Start new subtitle
                             pending_sub = Some(PendingSubtitle {
                                 id: uuid_v4(),
                                 start_time: current_time,
@@ -524,25 +594,26 @@ pub async fn start_native_pipeline(
                             );
                         }
                     }
+
+                    // Progress reporting
+                    let progress_pct = (((current_time - range_start) / total_range) * 100.0).clamp(0.0, 100.0);
+                    let _ = app_clone.emit(
+                        "vidglyph://pipeline-progress",
+                        PipelineProgressPayload {
+                            task_id: task_id_clone.clone(),
+                            current_time,
+                            total_time: range_end,
+                            percent: progress_pct,
+                            frames_processed,
+                            frames_skipped,
+                            subtitles_count,
+                        },
+                    );
                 }
-
-                prev_frame = Some(rgb_img);
-
-                // Emit progress event
-                let progress_pct = (((current_time - range_start) / total_range) * 100.0).clamp(0.0, 100.0);
-                let _ = app_clone.emit(
-                    "vidglyph://pipeline-progress",
-                    PipelineProgressPayload {
-                        task_id: task_id_clone.clone(),
-                        current_time,
-                        total_time: range_end,
-                        percent: progress_pct,
-                        frames_processed,
-                        frames_skipped,
-                        subtitles_count,
-                    },
-                );
             }
+
+            let _ = reader_handle.await;
+            let _ = worker_handle.await;
 
             // Flush final pending subtitle if any
             if let Some(existing) = pending_sub.take() {

@@ -38,7 +38,7 @@ use image::GenericImageView;
 use ndarray::Array;
 use postprocess::{compute_confidence, decode_boxes, nms_boxes, simple_hash};
 use preprocess::preprocess_detection;
-use session::{DET_SESSION, REC_SESSION};
+use session::{DET_POOL, DET_SESSION, REC_POOL, REC_SESSION};
 
 // Box expansion ratio for recognition crops.
 const BOX_EXPAND_RATIO: f32 = 0.1;
@@ -181,6 +181,155 @@ impl OcrEngine {
 
             if !text.is_empty() {
                 let confidence = compute_confidence(&rec_array);
+                results.push(OCRResult {
+                    text,
+                    confidence,
+                    bbox: BBox {
+                        x: x1,
+                        y: y1,
+                        width: x2 - x1,
+                        height: y2 - y1,
+                    },
+                });
+            }
+        }
+
+        OCR_CACHE
+            .lock()
+            .map(|mut c| c.insert(hash, results.clone()))
+            .ok();
+        Ok(results)
+    }
+
+    /// Run OCR using pooled sessions for high concurrency.
+    pub fn recognize_pooled(img: &DynamicImage, _lang: &str) -> Result<Vec<OCRResult>, String> {
+        let hash = simple_hash(img);
+
+        // Check cache
+        {
+            let mut cache = OCR_CACHE
+                .lock()
+                .map_err(|e| format!("{}: {e}", crate::commands::errors::CACHE_LOCK_POISONED))?;
+            if let Some(cached) = cache.get(&hash) {
+                tracing::debug!("OCR cache hit for hash 0x{:x}", hash);
+                return Ok(cached.clone());
+            }
+        }
+
+        // Run detection with pooled session
+        let (det_input, new_w, new_h) = preprocess_detection(img);
+        let (img_w, img_h) = img.dimensions();
+
+        let det_tensor = ort::value::TensorRef::from_array_view(&det_input)
+            .map_err(|e| format!("Failed to create detection tensor: {e}"))?;
+
+        let mut det_pooled = DET_POOL.acquire()?;
+        let det_outputs_owned = det_pooled.run_owned(ort::inputs![det_tensor])?;
+        drop(det_pooled);
+
+        // Get detection output
+        let (_name, det_shape_vec, det_data) = det_outputs_owned
+            .into_iter()
+            .next()
+            .ok_or_else(|| "No detection output".to_string())?;
+
+        let det_owned: Array<f32, ndarray::IxDyn> =
+            Array::from_shape_vec(ndarray::IxDyn(&det_shape_vec), det_data)
+                .map_err(|e| format!("Failed to create detection array: {e}"))?;
+        let det_shape = det_owned.shape().to_vec();
+        let det_h = det_shape.get(2).copied().unwrap_or(1).max(1);
+        let det_w = det_shape.get(3).copied().unwrap_or(1).max(1);
+
+        let det_array = Array::from_shape_vec(
+            ndarray::IxDyn(&[1, 1, det_h, det_w]),
+            det_owned.iter().copied().collect(),
+        )
+        .map_err(|e| format!("Failed to reshape detection output: {e}"))?;
+
+        // Decode boxes
+        let raw_boxes = decode_boxes(
+            &det_array,
+            img_w as f32,
+            img_h as f32,
+            new_w as u32,
+            new_h as u32,
+        );
+        let boxes = nms_boxes(&raw_boxes, 0.5);
+
+        if boxes.is_empty() {
+            let empty = vec![];
+            OCR_CACHE
+                .lock()
+                .map(|mut c| c.insert(hash, empty.clone()))
+                .ok();
+            return Ok(empty);
+        }
+
+        let mut results: Vec<OCRResult> = Vec::with_capacity(boxes.len());
+        let mut rec_pooled = REC_POOL.acquire()?;
+
+        for &[x1, y1, x2, y2] in &boxes {
+            let crop_x = (x1 as u32).saturating_sub((x1 * BOX_EXPAND_RATIO) as u32);
+            let crop_y = (y1 as u32).saturating_sub((y1 * BOX_EXPAND_RATIO) as u32);
+            let crop_w = ((x2 - x1) * (1.0 + 2.0 * BOX_EXPAND_RATIO)) as u32;
+            let crop_h = ((y2 - y1) * (1.0 + 2.0 * BOX_EXPAND_RATIO)) as u32;
+
+            let crop = img.crop_imm(
+                crop_x.min(img_w.saturating_sub(1)),
+                crop_y.min(img_h.saturating_sub(1)),
+                crop_w.min(img_w.saturating_sub(crop_x)).max(1),
+                crop_h.min(img_h.saturating_sub(crop_y)).max(1),
+            );
+
+            let rec_input = preprocess::preprocess_recognition(&crop);
+            let rec_tensor = match ort::value::TensorRef::from_array_view(&rec_input) {
+                Ok(t) => t,
+                Err(e) => {
+                    tracing::warn!("Failed to create recognition tensor: {e}");
+                    continue;
+                }
+            };
+
+            let rec_outputs_owned = match rec_pooled.run_owned(ort::inputs![rec_tensor]) {
+                Ok(o) => o,
+                Err(e) => {
+                    tracing::warn!("Recognition inference failed for one box: {e}");
+                    continue;
+                }
+            };
+
+            let (_name, rec_shape_vec, rec_data) = match rec_outputs_owned.into_iter().next() {
+                Some(v) => v,
+                None => continue,
+            };
+            let rec_owned: Array<f32, ndarray::IxDyn> =
+                match Array::from_shape_vec(ndarray::IxDyn(&rec_shape_vec), rec_data) {
+                    Ok(a) => a,
+                    Err(_) => continue,
+                };
+            let rec_shape = rec_owned.shape().to_vec();
+
+            if rec_shape.len() < 3 {
+                continue;
+            }
+
+            let timesteps = rec_shape[1];
+            let vocab_size = rec_shape[2];
+
+            let rec_reshaped = Array::from_shape_vec(
+                ndarray::IxDyn(&[1, timesteps, vocab_size]),
+                rec_owned.iter().copied().collect(),
+            );
+
+            let rec_array = match rec_reshaped {
+                Ok(a) => a,
+                Err(_) => continue,
+            };
+
+            let text = postprocess::ctc_decode(&rec_array);
+            let confidence = compute_confidence(&rec_array);
+
+            if !text.is_empty() {
                 results.push(OCRResult {
                     text,
                     confidence,

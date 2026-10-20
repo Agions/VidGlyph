@@ -88,7 +88,7 @@ impl OcrSession {
 }
 
 // Type alias for ONNX output tensor metadata
-type OutputTensor = (String, Vec<usize>, Vec<f32>);
+pub type OutputTensor = (String, Vec<usize>, Vec<f32>);
 
 impl OcrSession {
     /// Run inference and return owned output tensors.
@@ -132,7 +132,123 @@ impl OcrSession {
     }
 }
 
+// ─── Adaptive Concurrent Session Pool ─────────────────────────────────────────
+
+/// A thread-safe, adaptive session pool for scaling OCR inference across multi-core CPUs.
+pub struct OcrSessionPool {
+    path: PathBuf,
+    pool: Mutex<Vec<Session>>,
+    max_capacity: usize,
+}
+
+impl OcrSessionPool {
+    pub fn new(name: &str) -> Self {
+        let path = model_path(name);
+        // Adaptive capacity: 2~3 on multi-core (>4 CPUs), otherwise 1
+        let num_cpus = std::thread::available_parallelism()
+            .map(|n| n.get())
+            .unwrap_or(2);
+        let max_capacity = if num_cpus > 4 { 3 } else { 1 };
+
+        Self {
+            path,
+            pool: Mutex::new(Vec::with_capacity(max_capacity)),
+            max_capacity,
+        }
+    }
+
+    /// Acquire a session from the pool or instantiate a new one if below max capacity.
+    pub fn acquire(&self) -> Result<PooledSession<'_>, String> {
+        {
+            let mut guard = self
+                .pool
+                .lock()
+                .map_err(|e| format!("{}: {e}", crate::commands::errors::SESSION_LOCK_POISONED))?;
+            if let Some(session) = guard.pop() {
+                return Ok(PooledSession {
+                    session: Some(session),
+                    pool: self,
+                });
+            }
+        }
+
+        if !self.path.exists() {
+            return Err(format!(
+                "{}: {}. Run `scripts/download-models.sh` to download.",
+                crate::commands::errors::ONNX_MODEL_NOT_FOUND,
+                self.path.display()
+            ));
+        }
+
+        let session = Session::builder()
+            .map_err(|e| format!("Failed to create ONNX session builder: {e}"))?
+            .commit_from_file(&self.path)
+            .map_err(|e| format!("Failed to load ONNX model '{}': {e}", self.path.display()))?;
+
+        Ok(PooledSession {
+            session: Some(session),
+            pool: self,
+        })
+    }
+
+    fn release(&self, session: Session) {
+        if let Ok(mut guard) = self.pool.lock() {
+            if guard.len() < self.max_capacity {
+                guard.push(session);
+            }
+        }
+    }
+}
+
+/// RAII guard for a pooled ONNX session. Returns to pool on Drop.
+pub struct PooledSession<'a> {
+    session: Option<Session>,
+    pool: &'a OcrSessionPool,
+}
+
+impl<'a> PooledSession<'a> {
+    pub fn run_owned<'i, 'v: 'i, const N: usize>(
+        &mut self,
+        input_values: impl Into<ort::session::SessionInputs<'i, 'v, N>>,
+    ) -> Result<Vec<OutputTensor>, String> {
+        let session = self
+            .session
+            .as_mut()
+            .ok_or_else(|| "Session not present in pool guard".to_string())?;
+
+        let output_names: Vec<String> = session
+            .outputs()
+            .iter()
+            .map(|o| o.name().to_string())
+            .collect();
+
+        let outputs = session
+            .run(input_values)
+            .map_err(|e| format!("{}: {e}", crate::commands::errors::ONNX_INFERENCE_FAILED))?;
+
+        let mut result = Vec::with_capacity(outputs.len());
+        for name in &output_names {
+            if let Ok((shape, data)) = outputs[name.as_str()].try_extract_tensor::<f32>() {
+                let shape_vec: Vec<usize> = shape.iter().map(|&d| d as usize).collect();
+                result.push((name.clone(), shape_vec, data.to_vec()));
+            }
+        }
+        Ok(result)
+    }
+}
+
+impl<'a> Drop for PooledSession<'a> {
+    fn drop(&mut self) {
+        if let Some(session) = self.session.take() {
+            self.pool.release(session);
+        }
+    }
+}
+
 // ─── Session singletons ───────────────────────────────────────────────────────
 
 pub static DET_SESSION: LazyLock<OcrSession> = LazyLock::new(|| OcrSession::new("det.onnx"));
 pub static REC_SESSION: LazyLock<OcrSession> = LazyLock::new(|| OcrSession::new("rec.onnx"));
+
+pub static DET_POOL: LazyLock<OcrSessionPool> = LazyLock::new(|| OcrSessionPool::new("det.onnx"));
+pub static REC_POOL: LazyLock<OcrSessionPool> = LazyLock::new(|| OcrSessionPool::new("rec.onnx"));
