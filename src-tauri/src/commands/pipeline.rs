@@ -146,9 +146,18 @@ async fn download_file_with_fallback(
 
         match output {
             Ok(out) if out.status.success() => {
-                if dest_path.exists() && std::fs::metadata(dest_path).map(|m| m.len() > 100_000).unwrap_or(false) {
+                if dest_path.exists()
+                    && std::fs::metadata(dest_path)
+                        .map(|m| m.len() > 100_000)
+                        .unwrap_or(false)
+                {
                     let total = std::fs::metadata(dest_path).map(|m| m.len()).unwrap_or(0);
-                    tracing::info!("Successfully downloaded [{}] from {} ({} bytes)", model_name, url, total);
+                    tracing::info!(
+                        "Successfully downloaded [{}] from {} ({} bytes)",
+                        model_name,
+                        url,
+                        total
+                    );
                     let _ = app_handle.emit(
                         "vidglyph://model-download-progress",
                         DownloadModelProgressPayload {
@@ -166,7 +175,11 @@ async fn download_file_with_fallback(
                 }
             }
             Ok(out) => {
-                last_err = format!("Curl exited with {}: {}", out.status, String::from_utf8_lossy(&out.stderr));
+                last_err = format!(
+                    "Curl exited with {}: {}",
+                    out.status,
+                    String::from_utf8_lossy(&out.stderr)
+                );
             }
             Err(e) => {
                 last_err = format!("Failed to run curl: {e}");
@@ -186,12 +199,17 @@ async fn download_file_with_fallback(
         },
     );
 
-    Err(format!("All download mirrors failed for [{}]: {}", model_name, last_err))
+    Err(format!(
+        "All download mirrors failed for [{}]: {}",
+        model_name, last_err
+    ))
 }
 
 /// Download all missing native ONNX OCR models (det.onnx & rec.onnx).
 #[tauri::command]
-pub async fn download_native_ocr_models(app_handle: tauri::AppHandle) -> Result<NativeOcrStatus, String> {
+pub async fn download_native_ocr_models(
+    app_handle: tauri::AppHandle,
+) -> Result<NativeOcrStatus, String> {
     let dir = crate::commands::ocr_engine::session::model_dir();
     let det_path = dir.join("det.onnx");
     let rec_path = dir.join("rec.onnx");
