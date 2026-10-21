@@ -22,6 +22,7 @@ import {
   scaleUp,
   applyDeskew,
   morphOpen,
+  applyCLAHE,
 } from '@/utils/image'
 
 // Performance: reuse ImageData buffers to avoid GC pressure
@@ -52,6 +53,10 @@ export interface PreprocessorConfig {
   enhanceContrast: boolean
   /** Contrast multiplier (default: 1.5) */
   contrastLevel: number
+  /** Apply CLAHE local adaptive contrast enhancement (default: true) */
+  useClahe?: boolean
+  /** CLAHE clip limit (default: 2.5) */
+  claheClipLimit?: number
   /** Apply adaptive thresholding for binary-like result (default: true) */
   adaptiveThreshold: boolean
   /** Adaptive threshold block size (odd number, default: 11) */
@@ -162,13 +167,26 @@ export function preprocessImage(
   }
   currentData = grayBuf.data
 
-  // 3. Apply contrast enhancement
+  // 3. Apply contrast enhancement (CLAHE or standard contrast)
   if (cfg.enhanceContrast) {
-    const factor = 0.5 + (cfg.contrastLevel * (259 * 255)) / (255 * 259)
-    for (let i = 0; i < currentData.length; i += 4) {
-      currentData[i] = Math.max(0, Math.min(255, Math.round(factor * (currentData[i] - 128) + 128)))
-      currentData[i + 1] = Math.max(0, Math.min(255, Math.round(factor * (currentData[i + 1] - 128) + 128)))
-      currentData[i + 2] = Math.max(0, Math.min(255, Math.round(factor * (currentData[i + 2] - 128) + 128)))
+    if (cfg.useClahe) {
+      const clahed = applyCLAHE(
+        bufferToImageData({
+          data: currentData,
+          width: currentWidth,
+          height: currentHeight,
+        }),
+        cfg.claheClipLimit ?? 2.5,
+        8,
+      )
+      currentData = clahed.data
+    } else {
+      const factor = 0.5 + (cfg.contrastLevel * (259 * 255)) / (255 * 259)
+      for (let i = 0; i < currentData.length; i += 4) {
+        currentData[i] = Math.max(0, Math.min(255, Math.round(factor * (currentData[i] - 128) + 128)))
+        currentData[i + 1] = Math.max(0, Math.min(255, Math.round(factor * (currentData[i + 1] - 128) + 128)))
+        currentData[i + 2] = Math.max(0, Math.min(255, Math.round(factor * (currentData[i + 2] - 128) + 128)))
+      }
     }
   }
 

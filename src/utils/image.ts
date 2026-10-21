@@ -263,3 +263,110 @@ export function scaleUp(imageData: ImageData, factor: number): ImageData {
 
   return result
 }
+
+/**
+ * 局部自适应直方图均衡化（CLAHE: Contrast Limited Adaptive Histogram Equalization）
+ * 显著提升视频字幕文本与复杂发光/暗部背景的边缘对比度，抑制背景噪声放大。
+ * @param imageData 灰度或彩色图像数据
+ * @param clipLimit 对比度截断上限（默认 2.5）
+ * @param gridSize 网格切分尺寸（默认 8×8）
+ */
+export function applyCLAHE(
+  imageData: ImageData,
+  clipLimit: number = 2.5,
+  gridSize: number = 8,
+): ImageData {
+  const { width, height, data } = imageData
+  const result = new ImageData(width, height)
+  const numTilesX = Math.max(1, Math.min(width, gridSize))
+  const numTilesY = Math.max(1, Math.min(height, gridSize))
+  const tileW = width / numTilesX
+  const tileH = height / numTilesY
+
+  // 为每个分块计算限制对比度后的累积分布函数 (CDF)
+  const cdfs: Float32Array[] = []
+
+  for (let ty = 0; ty < numTilesY; ty++) {
+    for (let tx = 0; tx < numTilesX; tx++) {
+      const startX = Math.floor(tx * tileW)
+      const endX = Math.min(width, Math.floor((tx + 1) * tileW))
+      const startY = Math.floor(ty * tileH)
+      const endY = Math.min(height, Math.floor((ty + 1) * tileH))
+      const tilePixelCount = Math.max(1, (endX - startX) * (endY - startY))
+
+      const hist = new Uint32Array(256)
+      for (let y = startY; y < endY; y++) {
+        const rowOffset = y * width
+        for (let x = startX; x < endX; x++) {
+          const luma = Math.round(pixelLuma(data, (rowOffset + x) * 4))
+          hist[luma]++
+        }
+      }
+
+      // Clip histogram
+      const clipThreshold = Math.max(1, Math.round((clipLimit * tilePixelCount) / 256))
+      let excess = 0
+      for (let i = 0; i < 256; i++) {
+        if (hist[i] > clipThreshold) {
+          excess += hist[i] - clipThreshold
+          hist[i] = clipThreshold
+        }
+      }
+
+      // Redistribute excess
+      const bonus = Math.floor(excess / 256)
+      let remainder = excess % 256
+      for (let i = 0; i < 256; i++) {
+        hist[i] += bonus
+        if (remainder > 0) {
+          hist[i]++
+          remainder--
+        }
+      }
+
+      // Compute CDF
+      const cdf = new Float32Array(256)
+      let cum = 0
+      for (let i = 0; i < 256; i++) {
+        cum += hist[i]
+        cdf[i] = (cum / tilePixelCount) * 255
+      }
+      cdfs.push(cdf)
+    }
+  }
+
+  // 双线性插值映射各个像素点
+  for (let y = 0; y < height; y++) {
+    const normY = (y / tileH) - 0.5
+    const ty1 = Math.max(0, Math.min(numTilesY - 1, Math.floor(normY)))
+    const ty2 = Math.min(numTilesY - 1, ty1 + 1)
+    const dy = Math.max(0, Math.min(1, normY - ty1))
+    const rowOffset = y * width
+
+    for (let x = 0; x < width; x++) {
+      const normX = (x / tileW) - 0.5
+      const tx1 = Math.max(0, Math.min(numTilesX - 1, Math.floor(normX)))
+      const tx2 = Math.min(numTilesX - 1, tx1 + 1)
+      const dx = Math.max(0, Math.min(1, normX - tx1))
+
+      const idx = (rowOffset + x) * 4
+      const luma = Math.round(pixelLuma(data, idx))
+
+      const val11 = cdfs[ty1 * numTilesX + tx1][luma]
+      const val12 = cdfs[ty1 * numTilesX + tx2][luma]
+      const val21 = cdfs[ty2 * numTilesX + tx1][luma]
+      const val22 = cdfs[ty2 * numTilesX + tx2][luma]
+
+      const top = val11 + (val12 - val11) * dx
+      const bottom = val21 + (val22 - val21) * dx
+      const outLuma = Math.round(top + (bottom - top) * dy)
+
+      result.data[idx] = outLuma
+      result.data[idx + 1] = outLuma
+      result.data[idx + 2] = outLuma
+      result.data[idx + 3] = data[idx + 3]
+    }
+  }
+
+  return result
+}

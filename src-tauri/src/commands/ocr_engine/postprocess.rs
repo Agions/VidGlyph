@@ -3,6 +3,7 @@
 use image::DynamicImage;
 use image::GenericImageView;
 use ndarray::{Array, IxDyn};
+use std::sync::LazyLock;
 
 // Detection threshold for text region confidence.
 pub const DET_THRESHOLD: f32 = 0.3;
@@ -11,7 +12,21 @@ pub const MIN_BOX_HEIGHT: f32 = 8.0;
 // Minimum box width (pixels) to be considered valid text.
 pub const MIN_BOX_WIDTH: f32 = 2.0;
 
-/// Simplified PP-OCR character vocabulary (common CJK + Latin).
+/// Full PP-OCR keys vocabulary string (6623 characters).
+pub const PPOCR_KEYS_RAW: &str = include_str!("ppocr_keys_v1.txt");
+
+/// Lazy-loaded complete character vocabulary vector for PP-OCR inference.
+pub static PPOCR_VOCAB: LazyLock<Vec<char>> = LazyLock::new(|| {
+    let mut vocab = Vec::with_capacity(6630);
+    for line in PPOCR_KEYS_RAW.lines() {
+        if let Some(ch) = line.chars().next() {
+            vocab.push(ch);
+        }
+    }
+    vocab
+});
+
+/// Fallback character vocabulary (common CJK + Latin).
 pub const DEFAULT_VOCAB: &[char] = &[
     ' ', '!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/', '0', '1', '2',
     '3', '4', '5', '6', '7', '8', '9', ':', ';', '<', '=', '>', '?', '@', 'A', 'B', 'C', 'D', 'E',
@@ -207,9 +222,18 @@ pub fn ctc_decode(output: &Array<f32, IxDyn>) -> String {
 
     let mut result = String::new();
     let mut prev = 0usize;
+    let full_vocab = &*PPOCR_VOCAB;
+
     for &idx in &indices {
         if idx != prev && idx != 0 {
-            if let Some(&ch) = DEFAULT_VOCAB.get(idx.wrapping_sub(1)) {
+            // First try the complete 6623 character PP-OCR vocabulary
+            let target_char = if let Some(&ch) = full_vocab.get(idx.wrapping_sub(1)) {
+                Some(ch)
+            } else {
+                DEFAULT_VOCAB.get(idx.wrapping_sub(1)).copied()
+            };
+
+            if let Some(ch) = target_char {
                 result.push(ch);
             }
         }

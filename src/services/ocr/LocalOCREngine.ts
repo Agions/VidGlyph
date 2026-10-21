@@ -19,10 +19,12 @@ const FRAME_PREPROCESS_CONFIG: Partial<PreprocessorConfig> = {
   scaleFactor: 1.5,
   enhanceContrast: true,
   contrastLevel: 1.6,
+  useClahe: true,
+  claheClipLimit: 2.5,
   adaptiveThreshold: true,
   adaptiveBlockSize: 11,
   denoise: true,
-  morphCleanup: false,
+  morphCleanup: true,
   deskew: false,
   multiPass: false,
 };
