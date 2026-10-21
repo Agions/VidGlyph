@@ -52,12 +52,12 @@ export class LocalOCREngine implements IOCREngineProvider {
         const tesseractMod = await import('tesseract.js');
         this.worker = await tesseractMod.createWorker(['chi_sim', 'eng'], 1, { logger: () => {} });
       } catch (err) {
-        console.warn('LocalOCREngine: Tesseract Worker chi_sim+eng 初始化重试:', err);
+        logger.warn('LocalOCREngine', 'Tesseract Worker chi_sim+eng 初始化重试', err);
         try {
           const tesseractMod = await import('tesseract.js');
           this.worker = await tesseractMod.createWorker('chi_sim+eng');
         } catch (e) {
-          console.warn('LocalOCREngine: Tesseract 加载跳过:', e);
+          logger.warn('LocalOCREngine', 'Tesseract 加载跳过', e);
         }
       }
     }

@@ -239,6 +239,7 @@ import VideoCanvasOverlay from './VideoCanvasOverlay.vue';
 import WaveformTimeline from './WaveformTimeline.vue';
 import { TimecodeConverter } from '../../utils/TimecodeConverter';
 import { useWorkspaceVideoImport } from '../../composables/useWorkspaceVideoImport';
+import { logger } from '../../utils/logger';
 
 const subtitleStore = useSubtitleStore();
 const videoRef = ref<HTMLVideoElement | null>(null);
@@ -276,7 +277,7 @@ function onTimeUpdate() {
 }
 
 function onVideoError(e: Event) {
-  console.warn('Video 元素视频加载异常:', e);
+  logger.warn('VideoPlayer', 'Video 元素视频加载异常', e);
 }
 
 function onDropVideo(e: DragEvent) {

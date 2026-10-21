@@ -5,6 +5,7 @@
  */
 
 import type { IOCREngineProvider, OCRConfig, OCRItem, NormalizedROI } from './IOCREngine';
+import { logger } from '@/utils/logger';
 
 interface GeminiResponse {
   candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
@@ -88,7 +89,7 @@ export class CloudOCREngine implements IOCREngineProvider {
         },
       ];
     } catch (err: unknown) {
-      console.error('Cloud OCR Engine 识别异常:', err);
+      logger.error('CloudOCREngine', 'Cloud OCR Engine 识别异常', err);
       throw err;
     }
   }

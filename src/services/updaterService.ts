@@ -6,6 +6,7 @@
 
 import { TauriBridge } from './tauriBridge';
 import type { DownloadEvent } from '@tauri-apps/plugin-updater';
+import { logger } from '../utils/logger';
 
 export interface UpdateHandle {
   downloadAndInstall(onEvent?: (event: DownloadEvent) => void): Promise<void>;
@@ -53,7 +54,7 @@ export class UpdaterService {
           }
         }
       } catch (err) {
-        console.warn('Tauri Native Updater 检测跳过，降级至 GitHub API 检测:', err);
+        logger.warn('UpdaterService', 'Tauri Native Updater 检测跳过，降级至 GitHub API 检测', err);
       }
     }
 
@@ -71,7 +72,7 @@ export class UpdaterService {
         }
       }
     } catch (e) {
-      console.warn('GitHub API 版本检测跳过:', e);
+      logger.warn('UpdaterService', 'GitHub API 版本检测跳过', e);
     }
 
     return info;
@@ -96,7 +97,7 @@ export class UpdaterService {
         });
         return true;
       } catch (err) {
-        console.error('Tauri 自动更新下载安装失败:', err);
+        logger.error('UpdaterService', 'Tauri 自动更新下载安装失败', err);
         throw err;
       }
     } else {

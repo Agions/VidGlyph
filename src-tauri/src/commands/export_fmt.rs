@@ -26,12 +26,11 @@ where
         let start = format_ts(sub.start_time);
         let end = format_ts(sub.end_time);
         use std::fmt::Write;
-        write!(
+        let _ = write!(
             output,
             "{}\n{} --> {}\n{}\n\n",
             sub.index, start, end, sub.text
-        )
-        .unwrap();
+        );
     }
     output
 }
@@ -52,7 +51,7 @@ pub fn export_as_sbv(subtitles: &[SubtitleItem]) -> String {
     for sub in subtitles {
         let start = format_timestamp_sbv(sub.start_time);
         let end = format_timestamp_sbv(sub.end_time);
-        write!(output, "{},{}\n{}\n\n", start, end, sub.text).unwrap();
+        let _ = write!(output, "{},{}\n{}\n\n", start, end, sub.text);
     }
     output
 }
