@@ -1,14 +1,14 @@
 <template>
-  <div class="flex flex-col w-full h-full bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
+  <div class="flex flex-col w-full h-full bg-slate-900/80 backdrop-blur-xl border border-slate-800/90 rounded-xl overflow-hidden shadow-2xl">
     <!-- 顶部 Header 工具条 -->
-    <div class="flex items-center justify-between px-4 py-3 bg-slate-950 border-b border-slate-800">
+    <div class="flex items-center justify-between px-4 py-3 bg-slate-950/90 border-b border-slate-800/80">
       <div class="flex items-center gap-2">
-        <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg class="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
         </svg>
         <span class="text-sm font-semibold text-slate-100 flex items-center gap-2">
-          <span>字幕识别结果 ({{ subtitleStore.subtitleCount }})</span>
-          <span v-if="isFiltering" class="text-[11px] text-teal-300 font-normal">/ 显示 {{ visibleSubtitles.length }}</span>
+          <span>提取字幕卡尺 ({{ subtitleStore.subtitleCount }})</span>
+          <span v-if="isFiltering" class="text-[11px] text-teal-300 font-normal">/ 筛选 {{ visibleSubtitles.length }}</span>
 
           <!-- 时间轴校验健康状态胶囊 -->
           <button
@@ -34,11 +34,11 @@
         <!-- AI 智能润色按键 -->
         <button
           v-if="subtitleStore.subtitleCount > 0 && !isAiRunning"
-          class="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow transition cursor-pointer"
+          class="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white text-xs font-semibold rounded-lg shadow-md shadow-indigo-950/80 transition cursor-pointer"
           title="使用 AI 智能分析并纠正提取文本中的错别字与语法标点"
           @click="onAiCorrect"
         >
-          <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+          <svg class="w-3.5 h-3.5 fill-current text-cyan-200" viewBox="0 0 24 24">
             <path d="M12 2L9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2z"/>
           </svg>
           <span>AI 润色</span>

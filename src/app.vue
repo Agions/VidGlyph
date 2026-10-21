@@ -99,20 +99,20 @@ async function handleAutoRoi() {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--bg-base, #090d16);
+  background: radial-gradient(circle at 50% 0%, #0d1527 0%, #060911 75%);
   color: var(--text-primary, #f8fafc);
   overflow: hidden;
 }
 
 .workspace-main {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
-  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 440px);
+  gap: 14px;
   flex: 1;
   min-height: 0;
-  padding: 16px;
+  padding: 14px;
   overflow: hidden;
-  background: var(--bg-base, #090d16);
+  background: transparent;
 }
 
 .workspace-preview,

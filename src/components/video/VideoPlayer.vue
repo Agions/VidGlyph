@@ -1,22 +1,22 @@
 <template>
   <div
     ref="playerContainerRef"
-    class="relative flex flex-col w-full h-full bg-slate-950 rounded-xl overflow-hidden border border-slate-800/80 shadow-2xl transition-all"
+    class="relative flex flex-col w-full h-full bg-slate-950/80 rounded-xl overflow-hidden border border-slate-800/80 shadow-2xl backdrop-blur-md transition-all"
   >
     <!-- 顶部视频标尺 / 文件名信息与快速属性栏 -->
-    <div class="flex items-center justify-between px-4 py-2 bg-slate-900/90 backdrop-blur border-b border-slate-800/80 text-xs text-slate-300 select-none">
+    <div class="flex items-center justify-between px-4 py-2 bg-slate-900/85 backdrop-blur border-b border-slate-800/80 text-xs text-slate-300 select-none">
       <div class="flex items-center gap-2.5 font-mono">
         <span class="flex h-2 w-2 relative">
-          <span v-if="subtitleStore.videoUrl || subtitleStore.videoPoster" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-2 w-2" :class="subtitleStore.videoUrl || subtitleStore.videoPoster ? 'bg-emerald-500' : 'bg-slate-600'"></span>
+          <span v-if="subtitleStore.videoUrl || subtitleStore.videoPoster" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2" :class="subtitleStore.videoUrl || subtitleStore.videoPoster ? 'bg-cyan-500 shadow-sm shadow-cyan-500/50' : 'bg-slate-600'"></span>
         </span>
-        <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg class="w-4 h-4 text-cyan-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
         </svg>
-        <span class="truncate max-w-xs md:max-w-md text-emerald-200 font-semibold tracking-wide" :title="subtitleStore.videoFileName">
+        <span class="truncate max-w-xs md:max-w-md text-cyan-100 font-semibold tracking-wide" :title="subtitleStore.videoFileName">
           {{ subtitleStore.videoFileName || '未加载视频源' }}
         </span>
-        <span v-if="subtitleStore.videoWidth > 0" class="text-[10px] text-slate-500 bg-slate-800/80 px-1.5 py-0.5 rounded border border-slate-700/60 font-mono">
+        <span v-if="subtitleStore.videoWidth > 0" class="text-[10px] text-cyan-300 bg-cyan-950/70 px-1.5 py-0.5 rounded border border-cyan-800/60 font-mono">
           {{ subtitleStore.videoWidth }}×{{ subtitleStore.videoHeight }}
         </span>
       </div>
@@ -24,7 +24,7 @@
       <div class="flex items-center gap-3 text-slate-400 font-mono text-[11px]">
         <span class="hidden sm:inline text-slate-500">当前 / 总长:</span>
         <span class="text-slate-200 font-bold bg-slate-950/80 px-2 py-0.5 rounded border border-slate-800">
-          <span class="text-emerald-400">{{ formattedCurrentTime }}</span>
+          <span class="text-cyan-400">{{ formattedCurrentTime }}</span>
           <span class="text-slate-600 mx-1">/</span>
           <span>{{ formattedDuration }}</span>
         </span>

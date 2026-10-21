@@ -1,14 +1,14 @@
 <template>
-  <header class="h-16 px-5 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80 flex items-center justify-between shadow-2xl relative z-40 select-none">
+  <header class="h-16 px-5 bg-slate-950/85 backdrop-blur-xl border-b border-slate-800/80 flex items-center justify-between shadow-2xl relative z-40 select-none">
     <!-- Brand Logo, Name & Active Project Pill -->
     <div class="flex items-center gap-3">
       <!-- VidGlyph Optical Prism & Character Glyph Logo -->
-      <div class="relative w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 via-teal-400 to-indigo-500 p-0.5 shadow-lg shadow-emerald-950/80 group cursor-default">
+      <div class="relative w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 via-emerald-400 to-indigo-500 p-0.5 shadow-lg shadow-cyan-950/80 group cursor-default">
         <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-          <svg class="w-5 h-5 text-emerald-400 group-hover:scale-105 transition duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <svg class="w-5 h-5 text-cyan-400 group-hover:scale-105 transition duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <!-- Optical lens hexagonal aperture with stylized V & G glyph lines -->
-            <polygon points="12 2 20 6.5 20 17.5 12 22 4 17.5 4 6.5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="stroke-emerald-400"/>
-            <path d="M8 9l4 6 4-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="stroke-teal-300"/>
+            <polygon points="12 2 20 6.5 20 17.5 12 22 4 17.5 4 6.5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="stroke-cyan-400"/>
+            <path d="M8 9l4 6 4-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="stroke-emerald-300"/>
             <circle cx="12" cy="12" r="2" fill="currentColor" class="text-indigo-400"/>
           </svg>
         </div>
@@ -19,19 +19,19 @@
           <h1 class="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
             VidGlyph <span class="text-xs font-normal text-slate-400">· 字映</span>
           </h1>
-          <span class="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 font-semibold">v0.1.0</span>
-          <span v-if="isTauri" class="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded-full bg-indigo-950/80 text-indigo-300 border border-indigo-800/60">Desktop</span>
+          <span class="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded-full bg-cyan-950/90 text-cyan-400 border border-cyan-800/60 font-semibold">v0.1.0</span>
+          <span v-if="isTauri" class="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded-full bg-indigo-950/80 text-indigo-300 border border-indigo-800/60">Studio</span>
         </div>
-        <p class="text-[10px] text-slate-400">视频字幕光学解析与多轨精编工坊</p>
+        <p class="text-[10px] text-slate-400">专业视频字幕光学提取与多轨精编工作台</p>
       </div>
 
       <!-- Active Project Capsule Button -->
       <button
-        class="hidden lg:flex items-center gap-1.5 ml-2 px-2.5 py-1 rounded-lg bg-slate-900/80 hover:bg-slate-800/90 border border-slate-800 hover:border-emerald-600/50 text-[11px] font-mono text-slate-300 hover:text-white transition cursor-pointer shadow-xs"
+        class="hidden lg:flex items-center gap-1.5 ml-2 px-2.5 py-1 rounded-lg bg-slate-900/80 hover:bg-slate-850 border border-slate-800 hover:border-cyan-500/50 text-[11px] font-mono text-slate-300 hover:text-white transition cursor-pointer shadow-xs"
         title="当前工作区工程，点击切换或管理工程"
         @click="emit('openProjects')"
       >
-        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span>
+        <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 inline-block animate-pulse"></span>
         <span class="truncate max-w-[120px] font-medium">{{ projectStore.currentProjectName || '未命名工程' }}</span>
         <svg class="w-3 h-3 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -52,11 +52,11 @@
 
       <!-- 导入视频按键 -->
       <button
-        class="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-100 text-xs font-semibold rounded-lg border border-slate-700/80 hover:border-slate-600 shadow-sm transition cursor-pointer"
+        class="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900/90 hover:bg-slate-800 text-slate-100 text-xs font-semibold rounded-lg border border-slate-700/80 hover:border-cyan-500/40 shadow-sm transition cursor-pointer"
         title="导入本地视频文件 (快捷键: ⌘O / Ctrl+O)"
         @click="onImportClick"
       >
-        <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg class="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
         </svg>
         <span>导入视频</span>
@@ -64,33 +64,33 @@
 
       <!-- 工程项目管理按键 -->
       <button
-        class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700/80 hover:border-slate-600 shadow-sm transition cursor-pointer"
+        class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900/90 hover:bg-slate-800 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700/80 hover:border-slate-600 shadow-sm transition cursor-pointer"
         title="打开本地 SQLite 工程管理与 .vidglyph 工程包"
         @click="emit('openProjects')"
       >
         <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
         </svg>
-        <span>工程管理</span>
+        <span>工程库</span>
       </button>
 
       <!-- 批量生产线按键 -->
       <button
-        class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700/80 hover:border-slate-600 shadow-sm transition cursor-pointer"
+        class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900/90 hover:bg-slate-800 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700/80 hover:border-indigo-500/40 shadow-sm transition cursor-pointer"
         title="打开多视频并发提取生产线看板"
         @click="emit('openBatch')"
       >
         <svg class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
         </svg>
-        <span>批量流水线</span>
+        <span>流水线</span>
       </button>
 
       <!-- 自动定位选区按键 -->
       <button
         v-if="subtitleStore.videoUrl"
         :disabled="isDetectingROI"
-        class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-teal-300 text-xs font-semibold rounded-lg border border-teal-800/60 hover:border-teal-600/80 shadow-sm transition cursor-pointer"
+        class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900/90 hover:bg-slate-800 text-teal-300 text-xs font-semibold rounded-lg border border-teal-800/60 hover:border-teal-500/80 shadow-sm transition cursor-pointer"
         title="智能分析视频硬字幕轮廓并自动推荐 ROI 选区"
         @click="onAutoDetectROI"
       >
@@ -108,12 +108,12 @@
       <button
         :class="[
           'flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition shadow-sm cursor-pointer',
-          subtitleStore.isRoiActive ? 'bg-emerald-950/80 border-emerald-500/80 text-emerald-300 ring-1 ring-emerald-500/30' : 'bg-slate-900 border-slate-700/80 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+          subtitleStore.isRoiActive ? 'bg-cyan-950/80 border-cyan-500/80 text-cyan-300 ring-1 ring-cyan-500/30' : 'bg-slate-900 border-slate-700/80 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
         ]"
         title="开启/关闭视频预览画面上的 8 点手柄硬字幕选区"
         @click="subtitleStore.isRoiActive = !subtitleStore.isRoiActive"
       >
-        <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg class="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5v4h2V7h2V5H3zm0 10v4h4v-2H5v-2H3zm14 4h4v-4h-2v2h-2v2zm2-14h-4v2h2v2h2V5z"/>
         </svg>
         <span>标定选区</span>
@@ -126,7 +126,7 @@
           'flex items-center gap-2 px-5 py-2 text-xs font-bold rounded-lg shadow-lg transition cursor-pointer',
           subtitleStore.isExtracting
             ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-950/60 ring-2 ring-rose-500/30'
-            : 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-400 text-white shadow-emerald-950/80 hover:shadow-emerald-900/60 disabled:opacity-40 disabled:pointer-events-none'
+            : 'bg-gradient-to-r from-cyan-600 via-emerald-600 to-teal-500 hover:from-cyan-500 hover:to-emerald-400 text-white shadow-cyan-950/80 hover:shadow-cyan-900/60 disabled:opacity-40 disabled:pointer-events-none'
         ]"
         title="开始执行视频硬字幕流式提取 (快捷键: ⌘Enter / Ctrl+Enter)"
         @click="onExtractionClick"

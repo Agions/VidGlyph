@@ -4,30 +4,29 @@
 // ============================================
 
 // ── Color Palette (OKLCH for perceptual uniformity) ────────────────
-// Primary: Electric Cyan-Blue (distinctive, not generic AI purple)
-$primary: #0A84FF;
-$primary-dim: rgba($primary, 0.2);
-// In OKLCH (approx): oklch(0.65 0.20 250)
-// Secondary: Teal (for contrast and status)
-$secondary: #00D4AA;
-$secondary-dim: rgba($secondary, 0.2);
-// Accent: Warm Amber for contrast (not purple)
-$accent: #FF9F0A;
-$accent-dim: rgba($accent, 0.2);
+// Primary: Luminous Electric Cyan & Emerald Studio Accent
+$primary: #06B6D4;
+$primary-dim: rgba(6, 182, 212, 0.2);
+// Secondary: Vivid Emerald Studio Accent
+$secondary: #10B981;
+$secondary-dim: rgba(16, 185, 129, 0.2);
+// Accent: Sleek Electric Indigo
+$accent: #6366F1;
+$accent-dim: rgba(99, 102, 241, 0.2);
 
-// Neutral palette - Cool Gray with blue tint (not pure gray)
-$gray-950: #09090B;   // deepest bg
-$gray-900: #111114;   // base bg  
-$gray-850: #18181C;   // surface bg
-$gray-800: #222228;   // elevated bg
-$gray-750: #2A2A32;   // overlay / hover
-$gray-700: #3A3A44;   // borders
-$gray-600: #525260;   // muted text
-$gray-500: #7A7A8C;   // secondary text
-$gray-400: #9898A8;   // placeholder
-$gray-300: #C0C0CC;   // tertiary text
-$gray-200: #E0E0EC;   // primary text
-$gray-100: #FFFFFF;   // bright text
+// Neutral palette - Studio Obsidian / Deep Navy Space Titanium
+$gray-950: #060911;   // deepest obsidian canvas
+$gray-900: #0B111E;   // studio surface bg  
+$gray-850: #111A2E;   // module container bg
+$gray-800: #18233C;   // elevated card / inspector deck
+$gray-750: #202E4E;   // overlay / interactive hover
+$gray-700: #2D3D64;   // precision borders
+$gray-600: #4B5E88;   // muted borders and subtle text
+$gray-500: #7184AC;   // secondary text
+$gray-400: #94A3C4;   // placeholder
+$gray-300: #CBD5E1;   // tertiary text
+$gray-200: #E2E8F0;   // primary text
+$gray-100: #F8FAFC;   // crisp white text
 
 // Semantic aliases
 $bg-base:     $gray-950;
