@@ -89,6 +89,135 @@ pub struct NativeOcrStatus {
     pub model_dir: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DownloadModelProgressPayload {
+    pub model_name: String,
+    pub status: String, // "downloading" | "verifying" | "completed" | "error"
+    pub downloaded_bytes: u64,
+    pub total_bytes: u64,
+    pub percent: f64,
+    pub error: Option<String>,
+}
+
+/// Download a model file with dual mirror fallback (GitHub Releases + Fast CDN Mirror).
+async fn download_file_with_fallback(
+    app_handle: &tauri::AppHandle,
+    model_name: &str,
+    dest_path: &std::path::Path,
+    urls: &[&str],
+) -> Result<(), String> {
+    if let Some(parent) = dest_path.parent() {
+        tokio::fs::create_dir_all(parent)
+            .await
+            .map_err(|e| format!("Failed to create model directory {}: {e}", parent.display()))?;
+    }
+
+    let mut last_err = String::new();
+
+    for url in urls {
+        tracing::info!("Attempting to download [{}] from {}", model_name, url);
+
+        let _ = app_handle.emit(
+            "vidglyph://model-download-progress",
+            DownloadModelProgressPayload {
+                model_name: model_name.to_string(),
+                status: "downloading".to_string(),
+                downloaded_bytes: 0,
+                total_bytes: 0,
+                percent: 0.0,
+                error: None,
+            },
+        );
+
+        // Try downloading with curl process or reqwest
+        let output = tokio::process::Command::new("curl")
+            .arg("-L")
+            .arg("-f")
+            .arg("--connect-timeout")
+            .arg("10")
+            .arg("--max-time")
+            .arg("120")
+            .arg(url)
+            .arg("-o")
+            .arg(dest_path)
+            .output()
+            .await;
+
+        match output {
+            Ok(out) if out.status.success() => {
+                if dest_path.exists() && std::fs::metadata(dest_path).map(|m| m.len() > 100_000).unwrap_or(false) {
+                    let total = std::fs::metadata(dest_path).map(|m| m.len()).unwrap_or(0);
+                    tracing::info!("Successfully downloaded [{}] from {} ({} bytes)", model_name, url, total);
+                    let _ = app_handle.emit(
+                        "vidglyph://model-download-progress",
+                        DownloadModelProgressPayload {
+                            model_name: model_name.to_string(),
+                            status: "completed".to_string(),
+                            downloaded_bytes: total,
+                            total_bytes: total,
+                            percent: 100.0,
+                            error: None,
+                        },
+                    );
+                    return Ok(());
+                } else {
+                    last_err = format!("Downloaded file too small or invalid from {url}");
+                }
+            }
+            Ok(out) => {
+                last_err = format!("Curl exited with {}: {}", out.status, String::from_utf8_lossy(&out.stderr));
+            }
+            Err(e) => {
+                last_err = format!("Failed to run curl: {e}");
+            }
+        }
+    }
+
+    let _ = app_handle.emit(
+        "vidglyph://model-download-progress",
+        DownloadModelProgressPayload {
+            model_name: model_name.to_string(),
+            status: "error".to_string(),
+            downloaded_bytes: 0,
+            total_bytes: 0,
+            percent: 0.0,
+            error: Some(last_err.clone()),
+        },
+    );
+
+    Err(format!("All download mirrors failed for [{}]: {}", model_name, last_err))
+}
+
+/// Download all missing native ONNX OCR models (det.onnx & rec.onnx).
+#[tauri::command]
+pub async fn download_native_ocr_models(app_handle: tauri::AppHandle) -> Result<NativeOcrStatus, String> {
+    let dir = crate::commands::ocr_engine::session::model_dir();
+    let det_path = dir.join("det.onnx");
+    let rec_path = dir.join("rec.onnx");
+
+    // Mirror list: RapidAI GitHub Release vs Global CDN mirrors
+    let det_urls = [
+        "https://github.com/RapidAI/RapidOCR/releases/download/v1.1.0/ch_PP-OCRv4_det_infer.onnx",
+        "https://ghproxy.net/https://github.com/RapidAI/RapidOCR/releases/download/v1.1.0/ch_PP-OCRv4_det_infer.onnx",
+    ];
+
+    let rec_urls = [
+        "https://github.com/RapidAI/RapidOCR/releases/download/v1.1.0/ch_PP-OCRv4_rec_infer.onnx",
+        "https://ghproxy.net/https://github.com/RapidAI/RapidOCR/releases/download/v1.1.0/ch_PP-OCRv4_rec_infer.onnx",
+    ];
+
+    if !det_path.exists() {
+        download_file_with_fallback(&app_handle, "det.onnx", &det_path, &det_urls).await?;
+    }
+
+    if !rec_path.exists() {
+        download_file_with_fallback(&app_handle, "rec.onnx", &rec_path, &rec_urls).await?;
+    }
+
+    Ok(check_native_ocr_ready())
+}
+
 /// Check if native ONNX OCR models exist and are ready.
 #[tauri::command]
 pub fn check_native_ocr_ready() -> NativeOcrStatus {

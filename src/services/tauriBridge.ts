@@ -321,6 +321,29 @@ export class TauriBridge {
     await invoke('cancel_native_pipeline', { taskId })
   }
 
+  /** 一键下载并就绪缺失的原生 ONNX OCR 模型 */
+  public static async downloadNativeOcrModels(
+    onProgress?: (payload: { modelName: string; status: string; percent: number; error?: string }) => void,
+  ): Promise<NativeOcrStatus> {
+    if (!this.isTauriEnv()) {
+      return { ready: false, detExists: false, recExists: false, modelDir: '' }
+    }
+
+    let unlisten: UnlistenFn | null = null
+    if (onProgress) {
+      unlisten = await listen<{ modelName: string; status: string; percent: number; error?: string }>(
+        'vidglyph://model-download-progress',
+        (event) => onProgress(event.payload),
+      )
+    }
+
+    try {
+      return await invoke<NativeOcrStatus>('download_native_ocr_models')
+    } finally {
+      if (unlisten) unlisten()
+    }
+  }
+
   /**
    * 启动原生高性能流式提取管道。
    * 通过 Tauri Event 实时推送抽帧进度、检测出的字幕项与结束事件。

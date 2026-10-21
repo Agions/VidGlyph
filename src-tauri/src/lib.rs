@@ -55,6 +55,7 @@ pub fn run() {
             commands::system::get_tesseract_languages,
             commands::gpu::check_gpu_capability,
             commands::pipeline::check_native_ocr_ready,
+            commands::pipeline::download_native_ocr_models,
             commands::pipeline::start_native_pipeline,
             commands::pipeline::cancel_native_pipeline,
             commands::keyring::save_secure_credential,

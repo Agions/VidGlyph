@@ -37,6 +37,41 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
         </svg>
       </button>
+
+      <!-- 原生 ONNX 模型就绪状态指示器 / 一键下载胶囊 -->
+      <div v-if="isTauri" class="hidden xl:flex items-center">
+        <div
+          v-if="nativeStatus.ready"
+          class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-950/70 border border-emerald-800/60 text-[10px] text-emerald-400 font-mono"
+          title="Rust 原生 ONNX 模型已全量就绪，提供极速流式硬加速提取"
+        >
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          <span>原生引擎已就绪</span>
+        </div>
+
+        <button
+          v-else-if="!isDownloadingModels"
+          class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-950/80 hover:bg-cyan-900/80 border border-cyan-700/80 text-[10px] text-cyan-300 font-semibold cursor-pointer shadow-xs animate-bounce"
+          title="点击一键高速拉取 PP-OCRv4 ONNX 模型（~15MB），激活 50FPS 硬件加速流式提取"
+          @click="onDownloadNativeModels"
+        >
+          <svg class="w-3 h-3 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+          </svg>
+          <span>一键装载原生加速</span>
+        </button>
+
+        <div
+          v-else
+          class="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-slate-900 border border-cyan-800 text-[10px] text-cyan-200 font-mono"
+        >
+          <svg class="w-3 h-3 animate-spin text-cyan-400" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          <span>{{ downloadStatusText }}</span>
+        </div>
+      </div>
     </div>
 
     <!-- Center Main Action Buttons -->
@@ -241,10 +276,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useExtractionSettingsStore, useSubtitleStore, useProjectStore, useSecurityStore } from '../../stores';
 import { TauriBridge } from '../../services';
+import type { NativeOcrStatus } from '../../services/tauriBridge';
 import { useWorkspaceVideoImport } from '../../composables/useWorkspaceVideoImport';
+import { useNotification } from '../../composables/useNotification';
 import { SUPPORTED_LANGUAGES } from '../../core';
 
 const props = defineProps<{ isDetectingRoi?: boolean }>();
@@ -253,12 +290,63 @@ const subtitleStore = useSubtitleStore();
 const projectStore = useProjectStore();
 const securityStore = useSecurityStore();
 const extractionSettings = useExtractionSettingsStore();
+const notifications = useNotification();
 const supportedLanguages = SUPPORTED_LANGUAGES;
 
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const isTauri = computed(() => TauriBridge.isTauriEnv());
 const { importVideoFile, importVideoPath } = useWorkspaceVideoImport();
 const isDetectingROI = computed(() => props.isDetectingRoi === true);
+
+// 原生 OCR 引擎模型就绪检测与下载状态
+const nativeStatus = ref<NativeOcrStatus>({ ready: false, detExists: false, recExists: false, modelDir: '' });
+const isDownloadingModels = ref(false);
+const downloadStatusText = ref('准备中...');
+
+async function checkNativeStatus() {
+  if (isTauri.value) {
+    try {
+      const status = await TauriBridge.checkNativeOcrReady();
+      if (status) {
+        nativeStatus.value = status;
+      }
+    } catch {
+      // ignore
+    }
+  }
+}
+
+onMounted(() => {
+  void checkNativeStatus();
+});
+
+async function onDownloadNativeModels() {
+  if (isDownloadingModels.value) return;
+  isDownloadingModels.value = true;
+  downloadStatusText.value = '连接高速节点...';
+
+  try {
+    const updated = await TauriBridge.downloadNativeOcrModels((prog) => {
+      if (prog.status === 'downloading') {
+        downloadStatusText.value = `拉取 ${prog.modelName}...`;
+      } else if (prog.status === 'completed') {
+        downloadStatusText.value = `校验 ${prog.modelName}...`;
+      } else if (prog.status === 'error') {
+        downloadStatusText.value = '重试中...';
+      }
+    });
+
+    nativeStatus.value = updated;
+    if (updated.ready) {
+      notifications.success('Rust 原生 ONNX 模型全量就绪，已激活极速流式硬加速提取！');
+    }
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    notifications.error(`模型装载失败: ${msg}`);
+  } finally {
+    isDownloadingModels.value = false;
+  }
+}
 
 const hasTimeSpanConstraint = computed(() => {
   const { startTime, endTime } = extractionSettings.options;
